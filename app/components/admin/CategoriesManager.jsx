@@ -86,7 +86,7 @@ export default function CategoriesManager() {
     }
 
     try {
-      let url = `${API_BASE}/categories`
+      let url = getApiUrl(API_ENDPOINTS.CATEGORIES)
       let method = formData._id ? 'PUT' : 'POST'
       let headers = {}
       let body
