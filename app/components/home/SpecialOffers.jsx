@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
 import Link from 'next/link';
 
 export default function SpecialOffers() {
@@ -11,7 +14,7 @@ export default function SpecialOffers() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:4000/api/products/admin/all');
+        const res = await fetch(getApiUrl(API_ENDPOINTS.PRODUCTS + '/admin/all'));
         if (!res.ok) throw new Error('Erreur lors du chargement des offres spéciales');
         const data = await res.json();
         setOffers(data.filter(p => p.isSpecialOffer));

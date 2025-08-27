@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import StyledWrapper from './StyledWrapper';
+import { getApiUrl, API_ENDPOINTS } from '../lib/config';
 
 export default function CheckoutPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -88,7 +89,7 @@ export default function CheckoutPage() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:4000/api/orders', {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.ORDERS), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, User, Mail, Phone, ShoppingCart, ArrowLeft, MoreVertical } from 'lucide-react'
-
-const API_BASE = 'http://localhost:4000/api'
+import { getApiUrl, API_ENDPOINTS } from '../../../lib/config'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState([])
@@ -21,7 +20,7 @@ export default function ClientsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/orders`)
+      const res = await fetch(getApiUrl(API_ENDPOINTS.ORDERS))
       if (!res.ok) throw new Error('Erreur lors du chargement des clients')
       const data = await res.json()
       const orders = data.orders || [];

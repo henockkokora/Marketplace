@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-
-const API_BASE = 'http://localhost:4000/api'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 export default function CategoriesManager() {
   const [categories, setCategories] = useState([])
@@ -28,7 +27,7 @@ export default function CategoriesManager() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/categories`)
+      const res = await fetch(getApiUrl(API_ENDPOINTS.CATEGORIES))
       if (!res.ok) throw new Error('Erreur lors du chargement des catégories')
       const data = await res.json()
       setCategories(data)
@@ -227,7 +226,7 @@ export default function CategoriesManager() {
                     url += `/${catId}/subcategories/${subId}/subsubcategories/${subsubId}`;
                   }
                   
-                  const res = await fetch(url, { method: 'DELETE' });
+                  const res = await fetch(getApiUrl(url), { method: 'DELETE' });
                   if (!res.ok) {
                     const errorRes = await res.json().catch(() => ({}));
                     throw new Error(errorRes.error || 'Erreur lors de la suppression');

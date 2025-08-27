@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users, Eye, Download, Mail } from 'lucide-react'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('month')
@@ -19,7 +20,7 @@ export default function Analytics() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/analytics?range=${timeRange}`)
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ANALYTICS}?range=${timeRange}`))
       if (!res.ok) throw new Error('Erreur lors du chargement des analytics')
       const data = await res.json()
       setAnalyticsData(data)
@@ -42,7 +43,7 @@ export default function Analytics() {
   useEffect(() => {
     async function fetchNewsletterCount() {
       try {
-        const response = await fetch('http://localhost:4000/api/newsletter/subscribers', {
+        const response = await fetch(getApiUrl(`${API_ENDPOINTS.NEWSLETTER}/subscribers`), {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

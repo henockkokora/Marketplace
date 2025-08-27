@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useRef } from "react"
-
-const API_BASE = "http://localhost:4000/api"
+import { getApiUrl, API_ENDPOINTS } from "../../lib/config"
 
 export default function AdminOrderNotifier() {
   const audioRef = useRef(null)
@@ -16,7 +15,7 @@ export default function AdminOrderNotifier() {
     }
     async function pollOrders() {
       try {
-        const res = await fetch(`${API_BASE}/orders`)
+        const res = await fetch(getApiUrl(API_ENDPOINTS.ORDERS))
         if (!res.ok) return
         const data = await res.json()
         const unseen = (data.orders || []).filter(o => o.isSeen === false)

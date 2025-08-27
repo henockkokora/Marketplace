@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Filter, Eye, CheckCircle, XCircle, Truck, Package, FileText, Download } from 'lucide-react'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 // Animation CSS injectée dynamiquement pour le clignotement rapide du badge
 if (typeof window !== 'undefined' && !document.getElementById('pulse-fast-keyframes')) {
@@ -13,8 +14,6 @@ if (typeof window !== 'undefined' && !document.getElementById('pulse-fast-keyfra
 
 // Son de notification
 const notificationSound = typeof window !== 'undefined' ? new Audio('/sounds/notification.mp3') : null;
-
-const API_BASE = 'http://localhost:4000/api'
 
 export default function OrdersManager() {
   // --- STATES ---
@@ -63,7 +62,7 @@ export default function OrdersManager() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/orders`)
+      const res = await fetch(getApiUrl(API_ENDPOINTS.ORDERS))
       if (!res.ok) throw new Error('Erreur lors du chargement des commandes')
       const data = await res.json()
       setOrders(data)
@@ -77,7 +76,7 @@ export default function OrdersManager() {
   // --- STATUS UPDATE ---
   async function handleStatusChange(orderId, newStatus) {
     try {
-      const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.ORDERS}/${orderId}/status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -258,7 +257,7 @@ export default function OrdersManager() {
                       onClick={async () => {
                         // Marquer la commande comme vue
                         try {
-                          await fetch(`${API_BASE}/orders/${order._id}/seen`, { method: 'PATCH' })
+                          await fetch(getApiUrl(`${API_ENDPOINTS.ORDERS}/${order._id}/seen`), { method: 'PATCH' })
                           fetchOrders()
                         } catch {}
                         setSelectedOrder(order)

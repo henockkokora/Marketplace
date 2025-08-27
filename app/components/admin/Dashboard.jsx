@@ -1,5 +1,5 @@
 import { TrendingUp, Package, ShoppingCart, Users, DollarSign, Folder } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {

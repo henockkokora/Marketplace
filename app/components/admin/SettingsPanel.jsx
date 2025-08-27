@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Key, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 
 export default function SettingsPanel({ isOpen, onClose }) {
@@ -32,7 +33,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
     setError('')
     setSuccess(false)
     try {
-      const res = await fetch('http://localhost:4000/auth/change-password', {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.AUTH}/change-password`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

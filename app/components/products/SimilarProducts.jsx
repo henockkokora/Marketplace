@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
 
 export default function SimilarProducts({ category, currentId }) {
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -9,7 +10,7 @@ export default function SimilarProducts({ category, currentId }) {
     const fetchSimilarProducts = async () => {
       if (category && category._id) {
         try {
-          const res = await fetch(`http://localhost:4000/api/products/category/${category._id}`);
+          const res = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/category/${category._id}`));
           if (res.ok) {
             let products = await res.json();
             // Filter out the current product and limit to 4

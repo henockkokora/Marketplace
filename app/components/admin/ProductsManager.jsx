@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, Star } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-
-const API_BASE = 'http://localhost:4000/api'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 export default function ProductsManager() {
   // --- STATES ---
@@ -45,8 +44,8 @@ export default function ProductsManager() {
     setLoading(true)
     setError(null)
     try {
-      console.log('Tentative de chargement des produits depuis:', `${API_BASE}/products/admin/all`)
-      const res = await fetch(`${API_BASE}/products/admin/all`)
+      console.log('Tentative de chargement des produits depuis:', getApiUrl(`${API_ENDPOINTS.PRODUCTS}/admin/all`))
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/admin/all`))
       console.log('Réponse du serveur:', res.status, res.statusText)
       
       if (!res.ok) {
@@ -71,7 +70,7 @@ export default function ProductsManager() {
 
   async function fetchSubcategories() {
     try {
-      const res = await fetch(`${API_BASE}/subcategories/all`)
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.SUBCATEGORIES}/all`))
       if (!res.ok) {
         console.error('Erreur de réponse du serveur:', res.status, res.statusText)
         return
@@ -199,7 +198,7 @@ export default function ProductsManager() {
         body: Object.fromEntries(fd.entries())
       })
 
-      const res = await fetch(url, { 
+const res = await fetch(getApiUrl(url), { 
         method, 
         body: fd,
         // Ne pas définir le Content-Type, il sera défini automatiquement avec la boundary

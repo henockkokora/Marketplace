@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Star, ShoppingCart, Truck, Shield, RotateCcw, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useCart } from '../../context/CartContext'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 export default function ProductInfo({ product }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function ProductInfo({ product }) {
       // Enregistrer un clic sur le produit
       const productId = pathname.split('/').pop()
       if (productId) {
-        fetch(`http://localhost:4000/api/products/${productId}/click`, {
+        fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${productId}/click`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         }).catch(console.error)

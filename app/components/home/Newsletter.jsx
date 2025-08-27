@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
 import { Mail } from 'lucide-react'
 
 export default function Newsletter() {
@@ -16,7 +17,7 @@ export default function Newsletter() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/newsletter/subscribe', {
+      const res = await fetch(getApiUrl(API_ENDPOINTS.NEWSLETTER + '/subscribe'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

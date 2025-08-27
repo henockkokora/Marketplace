@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getApiUrl, API_ENDPOINTS } from './lib/config';
 import Layout from './components/layout/Layout'
 import Hero from './components/home/Hero'
 import Categories from './components/home/Categories'
@@ -15,11 +16,12 @@ export default function Home() {
 
   useEffect(() => {
     // Charger les catégories et produits depuis le backend
-    fetch('http://localhost:4000/api/categories')
+    fetch(getApiUrl(API_ENDPOINTS.CATEGORIES))
       .then(res => res.json())
       .then(data => setCategories(data))
-      .catch(() => setCategories([]));
-    fetch('http://localhost:4000/api/products')
+      .catch(err => console.error('Error fetching categories:', err));
+
+    fetch(getApiUrl(API_ENDPOINTS.PRODUCTS))
       .then(res => res.json())
       .then(data => setProducts(data))
       .catch(() => setProducts([]));

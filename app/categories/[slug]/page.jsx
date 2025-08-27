@@ -6,6 +6,7 @@ import Layout from '../../components/layout/Layout'
 import CategoryBanner from '../../components/categories/CategoryBanner'
 import ProductFilters from '../../components/categories/ProductFilters'
 import ProductGrid from '../../components/categories/ProductGrid'
+import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
 
 export default function CategoryPage() {
   const params = useParams()
@@ -32,7 +33,7 @@ export default function CategoryPage() {
       
       try {
         // Récupérer la catégorie par son slug avec ses sous-catégories
-        const categoryResponse = await fetch(`http://localhost:4000/api/categories/slug/${slug}?populate=subcategories`);
+        const categoryResponse = await fetch(getApiUrl(`${API_ENDPOINTS.CATEGORIES}/slug/${slug}?populate=subcategories`));
         if (!categoryResponse.ok) {
           throw new Error('Catégorie non trouvée');
         }
@@ -45,10 +46,10 @@ export default function CategoryPage() {
         // Si la catégorie a des sous-catégories, on filtre par ces sous-catégories
         if (categoryData.subcategories && categoryData.subcategories.length > 0) {
           const subcategoryIds = categoryData.subcategories.map(sub => sub._id);
-          productsResponse = await fetch(`http://localhost:4000/api/products?subcategory=${subcategoryIds.join(',')}`);
+          productsResponse = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}?subcategory=${subcategoryIds.join(',')}`));
         } else {
           // Si pas de sous-catégories, on filtre par la catégorie principale
-          productsResponse = await fetch(`http://localhost:4000/api/products?category=${categoryData._id}`);
+          productsResponse = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}?category=${categoryData._id}`));
         }
         
         if (!productsResponse.ok) {

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Star, ShoppingCart, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { toast } from 'react-toastify'
+import { getApiUrl } from '../../lib/config'
 
 const resolveImageUrl = (imagePath) => {
   if (!imagePath) return 'https://placehold.co/200x200?text=No+Image';
@@ -17,7 +18,7 @@ const resolveImageUrl = (imagePath) => {
   }
   
   // Ajouter le préfixe de l'URL du backend
-  return `http://localhost:4000${cleanPath}`;
+  return `${getApiUrl('')}${cleanPath}`;
 };
 
 export default function ProductGrid({ products = [] }) {

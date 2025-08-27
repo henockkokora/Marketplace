@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getApiUrl, API_ENDPOINTS } from '../../../lib/config';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(30px); }
@@ -45,7 +46,7 @@ const Form = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:4000/api/auth/login', {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.AUTH}/login`), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
