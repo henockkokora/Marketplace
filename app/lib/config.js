@@ -3,7 +3,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = process.env.VERCEL === '1';
 
 // URL de base de l'API
-let API_BASE_URL = 'https://marketplace-9l4q.onrender.com';
+let API_BASE_URL = 'https://marketplace-9l4q.onrender.com/api';
 
 // Log pour le débogage
 if (typeof window !== 'undefined') {
