@@ -1,7 +1,15 @@
+// Chargement des dépendances principales
 const dotenv = require('dotenv');
 const path = require('path');
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const fs = require('fs-extra');
+const compression = require('compression');
+const { imageOptimizer } = require('./utils/imageOptimizer');
 
-// Chargement du fichier .env avec gestion des erreurs améliorée
+// Configuration des variables d'environnement
 try {
   const envPath = path.resolve(__dirname, '.env');
   const result = dotenv.config({ path: envPath });
@@ -22,24 +30,15 @@ try {
     console.warn('Assurez-vous de les avoir configurées dans les paramètres de votre déploiement.');
   }
   
+  // Vérification des variables critiques
+  if (!process.env.MONGODB_URI) {
+    throw new Error('La variable MONGODB_URI est requise mais n\'est pas définie.');
+  }
+  
 } catch (error) {
-  console.warn('Erreur lors du chargement du fichier .env. Vérifiez les variables d\'environnement:', error.message);
-}
-
-// Vérification des variables critiques
-if (!process.env.MONGODB_URI) {
-  console.error('ERREUR: La variable MONGODB_URI est requise mais n\'est pas définie.');
+  console.error('ERREUR:', error.message);
   process.exit(1);
 }
-
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const fs = require('fs-extra');
-const path = require('path');
-const compression = require('compression');
-const { imageOptimizer } = require('./utils/imageOptimizer');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');

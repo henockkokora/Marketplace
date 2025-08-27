@@ -5,8 +5,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "npx nodemon server.js",
-    "build": "npm install"
+    "dev": "node server.js",
+    "build": "npm install",
+    "dev:watch": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
