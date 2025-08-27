@@ -12,8 +12,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
+const compression = require('compression');
+const { imageOptimizer } = require('./utils/imageOptimizer');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -67,8 +69,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable preflight for all routes
 
+// Middleware pour compresser les réponses
+app.use(compression());
+
 // Middleware pour parser le JSON
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
+
+// Middleware pour optimiser les images
+app.use('/uploads', imageOptimizer());
+
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware de journalisation (désactivé en production)
@@ -78,13 +87,12 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-
 // Configuration des fichiers statiques
 const setupStaticFiles = () => {
   const baseUploadsDir = path.join(process.cwd(), 'uploads');
   
   // Créer les sous-dossiers nécessaires
-  const subDirs = ['', 'products', 'categories'];
+  const subDirs = ['', 'products', 'categories', 'optimized'];
   subDirs.forEach(subDir => {
     const fullPath = path.join(baseUploadsDir, subDir);
     try {
@@ -104,55 +112,26 @@ const setupStaticFiles = () => {
       return next();
     }
     
-    // Log des requêtes de fichiers en développement
+    // Désactiver le cache en développement
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Static Files] ${req.method} ${req.path}`);
-    }
-    
-    // Liste des emplacements possibles pour le fichier
-    const possiblePaths = [
-      // Chemin direct dans uploads
-      path.join(baseUploadsDir, req.path),
-      // Chemin dans uploads/categories
-      path.join(baseUploadsDir, 'categories', path.basename(req.path)),
-      // Chemin dans uploads/products
-      path.join(baseUploadsDir, 'products', path.basename(req.path))
-    ];
-    
-    // Trouver le premier chemin qui existe
-    const existingPath = possiblePaths.find(fs.existsSync);
-    
-    if (existingPath) {
-      // Si un fichier est trouvé, le servir
-      const serveFrom = path.dirname(existingPath);
-      const filePath = path.basename(existingPath);
-      
-      express.static(serveFrom, {
-        etag: true,
-        lastModified: true,
-        setHeaders: (res) => {
-          if (process.env.NODE_ENV === 'development') {
-            res.setHeader('Cache-Control', 'no-cache');
-          } else {
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-          }
-        }
-      })(req, res, next);
+      res.set('Cache-Control', 'no-store');
     } else {
-      // Si le fichier n'est pas trouvé, passer au middleware suivant
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Fichier non trouvé: ${req.path}`);
-        console.log('Emplacements vérifiés:', possiblePaths);
-      }
-      next();
+      // Mettre en cache pendant 1 an en production
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
     }
-  });
+    
+    next();
+  }, express.static(baseUploadsDir, {
+    etag: true,
+    lastModified: true,
+    maxAge: '1y',
+    immutable: true
+  }));
 };
 
 // Initialisation des fichiers statiques
 setupStaticFiles();
 
-// Log des requêtes en développement (désactivé)
 // if (process.env.NODE_ENV === 'development') {
 //   app.use((req, res, next) => {
 //     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
