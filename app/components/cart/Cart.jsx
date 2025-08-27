@@ -2,30 +2,7 @@
 
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
-import { getApiUrl } from '@/app/lib/config'
-
-const resolveImageUrl = (imagePath) => {
-  // Image de remplacement si pas de chemin fourni
-  if (!imagePath) {
-    return 'https://via.placeholder.com/300x200?text=No+Image';
-  }
-
-  // Si c'est déjà une URL complète, la retourner
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-  const cleanPath = imagePath.replace(/^[\\/]+/, '');
-  
-  // En production, les fichiers sont servis directement depuis /uploads
-  if (process.env.NODE_ENV === 'production') {
-    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
-  }
-  
-  // En développement, on utilise le chemin complet avec /api/uploads
-  return `http://localhost:4000/api/uploads/${cleanPath}`;
-};
+import { getMediaUrl, getFallbackImage } from '@/app/lib/media'
 
 export default function Cart({ isOpen, onClose }) {
   const { 
@@ -70,7 +47,7 @@ export default function Cart({ isOpen, onClose }) {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
                     <img
-                      src={resolveImageUrl(item.image)}
+                      src={item.image ? getMediaUrl(`uploads/${item.image}`) : getFallbackImage()}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                       onError={(e) => {

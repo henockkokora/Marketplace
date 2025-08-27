@@ -1,28 +1,5 @@
 import Link from 'next/link'
-import { getApiUrl } from '@/app/lib/config';
-
-const resolveImageUrl = (imagePath) => {
-  // Image de remplacement si pas de chemin fourni
-  if (!imagePath) {
-    return 'https://via.placeholder.com/150';
-  }
-
-  // Si c'est déjà une URL complète, la retourner
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-  const cleanPath = imagePath.replace(/^[\\/]+/, '');
-  
-  // En production, les fichiers sont servis directement depuis /uploads
-  if (process.env.NODE_ENV === 'production') {
-    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
-  }
-  
-  // En développement, on utilise le chemin complet avec /api/uploads
-  return `http://localhost:4000/api/uploads/${cleanPath}`;
-};
+import { getMediaUrl, getFallbackImage } from '@/app/lib/media';
 
 export default function Categories({ categories }) {
   return (
@@ -39,7 +16,7 @@ export default function Categories({ categories }) {
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg hover:bg-[#F2994A]1A transition-all transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
                 <div className="aspect-square overflow-hidden">
                   <img
-                    src={resolveImageUrl(category.image)}
+                    src={category.image ? getMediaUrl(`uploads/${category.image}`) : getFallbackImage()}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {

@@ -2,30 +2,7 @@ import Link from 'next/link'
 import { Star, ShoppingCart, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { toast } from 'react-toastify'
-import { getApiUrl } from '@/app/lib/config'
-
-const resolveImageUrl = (imagePath) => {
-  // Image de remplacement si pas de chemin fourni
-  if (!imagePath) {
-    return 'https://via.placeholder.com/300x200?text=No+Image';
-  }
-
-  // Si c'est déjà une URL complète, la retourner
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-  const cleanPath = imagePath.replace(/^[\\/]+/, '');
-  
-  // En production, les fichiers sont servis directement depuis /uploads
-  if (process.env.NODE_ENV === 'production') {
-    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
-  }
-  
-  // En développement, on utilise le chemin complet avec /api/uploads
-  return `http://localhost:4000/api/uploads/${cleanPath}`;
-};
+import { getMediaUrl, getFallbackImage } from '@/app/lib/media'
 
 export default function ProductGrid({ products = [] }) {
   const renderStars = (rating) => {
@@ -117,7 +94,7 @@ export default function ProductGrid({ products = [] }) {
               <div className="relative w-full h-0 pb-[100%] bg-gray-50 overflow-hidden">
                 <Link href={`/products/${product._id}`} className="block w-full h-full">
                   <img
-                    src={resolveImageUrl(product.images?.[0])}
+                    src={product.images?.[0] ? getMediaUrl(`uploads/${product.images[0]}`) : getFallbackImage()}
                     alt={product.name}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {

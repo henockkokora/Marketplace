@@ -5,30 +5,7 @@ import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, Star } from 'lucide-r
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
-
-// Fonction utilitaire pour résoudre les URLs d'images
-const resolveImageUrl = (imagePath) => {
-  // Image de remplacement si pas de chemin fourni
-  if (!imagePath) {
-    return 'https://via.placeholder.com/300x200?text=No+Image';
-  }
-
-  // Si c'est déjà une URL complète, la retourner
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-  const cleanPath = imagePath.replace(/^[\\/]+/, '');
-  
-  // En production, les fichiers sont servis directement depuis /uploads
-  if (process.env.NODE_ENV === 'production') {
-    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
-  }
-  
-  // En développement, on utilise le chemin complet avec /api/uploads
-  return `http://localhost:4000/api/uploads/${cleanPath}`;
-};
+import { getMediaUrl, getFallbackImage } from '@/app/lib/media'
 
 export default function ProductsManager() {
   // --- STATES ---
@@ -508,7 +485,7 @@ const res = await fetch(getApiUrl(url), {
                       <div className="flex items-center">
                         <div className="relative w-12 h-12 flex-shrink-0">
                           <img
-                            src={resolveImageUrl(product.images?.[0])}
+                            src={product.images?.[0] ? getMediaUrl(`uploads/${product.images[0]}`) : getFallbackImage()}
                             alt={product.name}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {

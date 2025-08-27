@@ -5,31 +5,7 @@ import { Plus, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
-
-// Fonction utilitaire pour résoudre les URLs d'images
-const resolveImageUrl = (imagePath) => {
-  // Image de remplacement si pas de chemin fourni
-  if (!imagePath) {
-    return 'https://via.placeholder.com/100x100?text=No+Image';
-  }
-
-  // Si c'est déjà une URL complète, la retourner
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
-
-  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-  const cleanPath = imagePath.replace(/^[\\/]+/, '');
-  
-  // En production, les fichiers sont servis directement depuis /uploads
-  if (process.env.NODE_ENV === 'production') {
-    const baseUrl = getApiUrl('').replace('/api', ''); // Retire /api pour les fichiers statiques
-    return `${baseUrl}/uploads/${cleanPath}`;
-  }
-  
-  // En développement, on utilise le chemin complet avec /api/uploads
-  return getApiUrl(`/uploads/${cleanPath}`);
-};
+import { getMediaUrl, getFallbackImage } from '@/app/lib/media'
 
 export default function CategoriesManager() {
   const [categories, setCategories] = useState([])
@@ -353,7 +329,7 @@ export default function CategoriesManager() {
                       )}
                     </button> 
                     <img
-                      src={resolveImageUrl(category.image)}
+                      src={category.image ? getMediaUrl(`uploads/${category.image}`) : getFallbackImage()}
                       alt={category.name}
                       className="w-12 h-12 object-cover rounded"
                       onError={(e) => {
@@ -405,7 +381,7 @@ export default function CategoriesManager() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-3">
                             <img
-                              src={resolveImageUrl(subcategory.image)}
+                              src={subcategory.image ? getMediaUrl(`uploads/${subcategory.image}`) : getFallbackImage()}
                               alt={subcategory.name}
                               className="w-10 h-10 object-cover rounded"
                               onError={(e) => {
