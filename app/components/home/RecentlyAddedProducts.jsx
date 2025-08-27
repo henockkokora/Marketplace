@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Star, ShoppingCart, ChevronRight, Trash2, Plus } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useCart } from '../../context/CartContext'
+import { getApiUrl } from '@/app/lib/config';
 
 const resolveImageUrl = (imagePath) => {
   if (!imagePath) return 'https://placehold.co/200x200?text=No+Image';
@@ -16,8 +17,8 @@ const resolveImageUrl = (imagePath) => {
     cleanPath = `/uploads/${cleanPath}`;
   }
   
-  // Ajouter le préfixe de l'URL du backend
-  return `http://localhost:4000${cleanPath}`;
+  // Utiliser getApiUrl pour construire l'URL complète
+  return getApiUrl(cleanPath);
 };
 
 export default function RecentlyAddedProducts({ products }) {

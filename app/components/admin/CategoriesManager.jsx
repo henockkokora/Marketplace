@@ -316,11 +316,8 @@ export default function CategoriesManager() {
         cleanPath = cleanPath.substring(8); // Enlève 'uploads/'
       }
 
-      // Construire l'URL complète
-      const baseUrl = 'http://localhost:4000/uploads/';
-      const fullUrl = `${baseUrl}${cleanPath}`;
-      
-      return fullUrl;
+      // Utiliser getApiUrl pour construire l'URL complète
+      return getApiUrl(`/uploads/${cleanPath}`);
     } catch (error) {
       console.error('Erreur dans resolveImageUrl:', error);
       return 'https://placehold.co/48x48?text=Error';

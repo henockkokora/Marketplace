@@ -10,8 +10,6 @@ export default function Analytics() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const API_BASE = 'http://localhost:4000/api'
-
   useEffect(() => {
     fetchAnalytics()
   }, [timeRange])

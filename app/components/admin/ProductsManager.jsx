@@ -410,11 +410,8 @@ const res = await fetch(getApiUrl(url), {
     // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
     const cleanPath = imagePath.replace(/^[\\/]+/, '');
 
-    // Construire l'URL complète
-    const baseUrl = 'http://localhost:4000/uploads/';
-    const fullUrl = `${baseUrl}${cleanPath}`;
-
-    return fullUrl;
+    // Utiliser getApiUrl pour construire l'URL complète
+    return getApiUrl(`/uploads/${cleanPath}`);
   }  
 
   // --- RENDER ---

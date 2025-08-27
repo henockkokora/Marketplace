@@ -25,8 +25,7 @@ export default function ProductDetail() {
       }
       
       try {
-        const API_BASE = 'http://localhost:4000/api';
-        let url = `${API_BASE}/products/${id}`;
+        let url = getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${id}`);
         const response = await fetch(url);
         if (!response.ok) {
           let errorData = {};

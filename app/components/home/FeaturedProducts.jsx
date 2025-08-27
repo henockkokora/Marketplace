@@ -3,6 +3,7 @@ import { Star, ShoppingCart, ChevronRight, Trash2, Plus, Loader2 } from 'lucide-
 import { toast } from 'react-toastify'
 import { useCart } from '../../context/CartContext'
 import { useState, useEffect } from 'react'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 // Vérifie si un produit est considéré comme "Nouveau" (ajouté il y a moins d'un mois)
 const isProductNew = (createdAt) => {
@@ -25,8 +26,8 @@ const resolveImageUrl = (imagePath) => {
     cleanPath = `/uploads/${cleanPath}`;
   }
   
-  // Ajouter le préfixe de l'URL du backend
-  return `http://localhost:4000${cleanPath}`;
+  // Utiliser getApiUrl pour construire l'URL complète
+  return getApiUrl(cleanPath);
 };
 
 export default function FeaturedProducts() {
@@ -39,7 +40,7 @@ export default function FeaturedProducts() {
     const fetchMostOrderedProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:4000/api/products/most-ordered');
+        const response = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/most-ordered`));
         
         if (!response.ok) {
           throw new Error('Erreur lors du chargement des produits en vedette');

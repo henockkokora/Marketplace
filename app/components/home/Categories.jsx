@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getApiUrl } from '@/app/lib/config';
 
 const resolveImageUrl = (imagePath) => {
   if (!imagePath) return 'https://placehold.co/400x400?text=No+Image';
@@ -13,8 +14,8 @@ const resolveImageUrl = (imagePath) => {
     cleanPath = `/uploads/${cleanPath}`;
   }
   
-  // Ajouter le préfixe de l'URL du backend
-  return `http://localhost:4000${cleanPath}`;
+  // Utiliser getApiUrl pour construire l'URL complète
+  return getApiUrl(cleanPath);
 };
 
 export default function Categories({ categories }) {
