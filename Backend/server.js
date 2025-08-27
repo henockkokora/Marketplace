@@ -10,34 +10,36 @@ const compression = require('compression');
 const { imageOptimizer } = require('./utils/imageOptimizer');
 
 // Configuration des variables d'environnement
-try {
-  const envPath = path.resolve(__dirname, '.env');
-  const result = dotenv.config({ path: envPath });
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const envPath = path.resolve(__dirname, '.env');
+    const result = dotenv.config({ path: envPath });
+    
+    if (result.error) {
+      console.warn('Mode développement: Fichier .env non trouvé. Vérifiez les variables d\'environnement.');
+    } else {
+      console.log('Fichier .env chargé avec succès');
+    }
+  } catch (error) {
+    console.warn('Mode développement: Erreur lors du chargement du .env:', error.message);
+  }
+}
+
+// Vérification des variables d'environnement requises
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  const errorMsg = `ERREUR: Variables d'environnement manquantes: ${missingVars.join(', ')}`;
+  console.error(errorMsg);
   
-  if (result.error) {
-    console.warn('Avertissement: Impossible de charger le fichier .env. Vérifiez les variables d\'environnement dans les paramètres du déploiement.');
-    console.warn('Détails:', result.error.message);
-  } else {
-    console.log('Fichier .env chargé avec succès');
+  // En production, on arrête le serveur si les variables critiques manquent
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
   }
   
-  // Vérification des variables d'environnement requises
-  const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS'];
-  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-  
-  if (missingVars.length > 0) {
-    console.warn('Attention: Variables d\'environnement manquantes:', missingVars.join(', '));
-    console.warn('Assurez-vous de les avoir configurées dans les paramètres de votre déploiement.');
-  }
-  
-  // Vérification des variables critiques
-  if (!process.env.MONGODB_URI) {
-    throw new Error('La variable MONGODB_URI est requise mais n\'est pas définie.');
-  }
-  
-} catch (error) {
-  console.error('ERREUR:', error.message);
-  process.exit(1);
+  // En développement, on affiche un avertissement mais on continue
+  console.warn('Mode développement: Le serveur démarre malgré les variables manquantes.');
 }
 
 // Routes
@@ -65,27 +67,41 @@ process.on('uncaughtException', (err) => {
 });
 
 // Configuration CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:4000'
-];
-
 const corsOptions = {
   origin: function (origin, callback) {
-    // Autoriser les requêtes sans origine (comme les applications mobiles ou Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    // En développement, on autorise toutes les origines
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // En production, on vérifie l'origine
+    const allowedOrigins = [
+      'https://votre-frontend.vercel.app',
+      // Ajoutez d'autres domaines de production ici
+    ];
+
+    // Autoriser les requêtes sans origine (applications mobiles, Postman, etc.)
+    // En production, il est recommandé de restreindre cela
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('Tentative de connexion depuis une origine non autorisée:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Content-Length', 
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'X-Auth-Token'
+  ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // 24 heures
 };
 
 // Middleware CORS
