@@ -1,11 +1,35 @@
 const dotenv = require('dotenv');
-const result = dotenv.config({ path: __dirname + '/.env' });
+const path = require('path');
 
-if (result.error) {
-  console.error('Erreur de chargement du fichier .env:', result.error);
-} else {
-  console.log('Fichier .env chargé avec succès');
-  console.log('JWT_SECRET défini:', !!process.env.JWT_SECRET);
+// Chargement du fichier .env avec gestion des erreurs améliorée
+try {
+  const envPath = path.resolve(__dirname, '.env');
+  const result = dotenv.config({ path: envPath });
+  
+  if (result.error) {
+    console.warn('Avertissement: Impossible de charger le fichier .env. Vérifiez les variables d\'environnement dans les paramètres du déploiement.');
+    console.warn('Détails:', result.error.message);
+  } else {
+    console.log('Fichier .env chargé avec succès');
+  }
+  
+  // Vérification des variables d'environnement requises
+  const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'MAIL_USER', 'MAIL_PASS'];
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.warn('Attention: Variables d\'environnement manquantes:', missingVars.join(', '));
+    console.warn('Assurez-vous de les avoir configurées dans les paramètres de votre déploiement.');
+  }
+  
+} catch (error) {
+  console.warn('Erreur lors du chargement du fichier .env. Vérifiez les variables d\'environnement:', error.message);
+}
+
+// Vérification des variables critiques
+if (!process.env.MONGODB_URI) {
+  console.error('ERREUR: La variable MONGODB_URI est requise mais n\'est pas définie.');
+  process.exit(1);
 }
 
 const express = require('express');
