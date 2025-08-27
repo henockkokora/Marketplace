@@ -8,8 +8,12 @@ const MEDIA_BASE = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://localhost:4
  */
 export const getMediaUrl = (path = '') => {
   if (!path) return '';
-  // On retire juste le slash initial si présent
+  // On retire le slash initial si présent
   let cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  // On force le préfixe uploads/ si absent
+  if (!cleanPath.startsWith('uploads/')) {
+    cleanPath = `uploads/${cleanPath}`;
+  }
   const url = `${MEDIA_BASE.replace(/\/$/, '')}/${cleanPath}`;
   if (process.env.NODE_ENV === 'development') {
     console.log('[getMediaUrl] URL finale:', url);
