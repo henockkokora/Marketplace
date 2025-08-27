@@ -99,7 +99,7 @@ export default function RecentlyAddedProducts({ products }) {
                 <div className="relative w-full h-0 pb-[100%] bg-gray-50 overflow-hidden">
                   <Link href={`/products/${product._id}`} className="block w-full h-full">
                     <img
-                      src={product.images?.[0] ? getMediaUrl(`uploads/${product.images[0]}`) : getFallbackImage()}
+                      src={product.images?.[0] ? getMediaUrl(product.images[0]) : getFallbackImage()}
                       alt={product.name}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {

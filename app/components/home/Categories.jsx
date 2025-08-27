@@ -16,7 +16,7 @@ export default function Categories({ categories }) {
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg hover:bg-[#F2994A]1A transition-all transform hover:scale-105 hover:-translate-y-1 overflow-hidden">
                 <div className="aspect-square overflow-hidden">
                   <img
-                    src={category.image ? getMediaUrl(`uploads/${category.image}`) : getFallbackImage()}
+                    src={category.image ? getMediaUrl(category.image) : getFallbackImage()}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {

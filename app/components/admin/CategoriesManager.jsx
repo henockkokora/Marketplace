@@ -329,7 +329,7 @@ export default function CategoriesManager() {
                       )}
                     </button> 
                     <img
-                      src={category.image ? getMediaUrl(`uploads/${category.image}`) : getFallbackImage()}
+                      src={category.image ? getMediaUrl(category.image) : getFallbackImage()}
                       alt={category.name}
                       className="w-12 h-12 object-cover rounded"
                       onError={(e) => {
@@ -381,7 +381,7 @@ export default function CategoriesManager() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-3">
                             <img
-                              src={subcategory.image ? getMediaUrl(`uploads/${subcategory.image}`) : getFallbackImage()}
+                              src={subcategory.image ? getMediaUrl(subcategory.image) : getFallbackImage()}
                               alt={subcategory.name}
                               className="w-10 h-10 object-cover rounded"
                               onError={(e) => {

@@ -485,7 +485,7 @@ const res = await fetch(getApiUrl(url), {
                       <div className="flex items-center">
                         <div className="relative w-12 h-12 flex-shrink-0">
                           <img
-                            src={product.images?.[0] ? getMediaUrl(`uploads/${product.images[0]}`) : getFallbackImage()}
+                            src={product.images?.[0] ? getMediaUrl(product.images[0]) : getFallbackImage()}
                             alt={product.name}
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {

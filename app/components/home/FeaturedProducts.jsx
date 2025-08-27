@@ -118,7 +118,7 @@ export default function FeaturedProducts() {
                     <div className="relative w-full h-0 pb-[100%] bg-gray-50 overflow-hidden">
                       <Link href={`/products/${productId}`} className="block w-full h-full">
                         <img
-                          src={productImage ? getMediaUrl(`uploads/${productImage}`) : getFallbackImage()}
+                          src={productImage ? getMediaUrl(productImage) : getFallbackImage()}
                           alt={product.name}
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           onError={(e) => {

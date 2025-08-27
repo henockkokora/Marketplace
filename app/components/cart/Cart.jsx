@@ -47,7 +47,7 @@ export default function Cart({ isOpen, onClose }) {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
                     <img
-                      src={item.image ? getMediaUrl(`uploads/${item.image}`) : getFallbackImage()}
+                      src={item.image ? getMediaUrl(item.image) : getFallbackImage()}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                       onError={(e) => {

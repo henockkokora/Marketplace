@@ -4,16 +4,21 @@ export const MEDIA_BASE_URL =
 export const getMediaUrl = (path = '') => {
   if (!path) return '';
   
-  // Si c'est déjà une URL complète, la retourner telle quelle
+  // Si c'est déjà une URL complète, la retourner
   if (path.startsWith('http')) {
     return path;
   }
   
   // Nettoyer les slashes
   const cleanBase = MEDIA_BASE_URL.replace(/\/+$/, '');
-  const cleanPath = path.replace(/^\/+/, '');
   
-  return `${cleanBase}/${cleanPath}`;
+  // Supprimer les doublons de 'uploads/'
+  let cleanPath = path.replace(/^\/+/, '');
+  if (cleanPath.startsWith('uploads/')) {
+    cleanPath = cleanPath.replace('uploads/', '');
+  }
+  
+  return `${cleanBase}/uploads/${cleanPath}`;
 };
 
 export const getFallbackImage = () => {
