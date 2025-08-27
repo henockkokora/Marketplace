@@ -334,11 +334,7 @@ export default function CategoriesManager() {
                         alt={category.name}
                         className="w-full h-full object-cover rounded"
                         onError={(e) => {
-                          console.error('Erreur de chargement de l\'image:', {
-                            src: e.target.src,
-                            originalPath: category.image,
-                            timestamp: new Date().toISOString()
-                          });
+                          console.error('Erreur chargement image (catégorie):', e.target.src, 'Path original:', category.image);
                           e.target.src = getFallbackImage();
                           e.target.className = 'w-full h-full object-contain bg-gray-100 rounded';
                         }}
@@ -397,11 +393,7 @@ export default function CategoriesManager() {
                                 alt={subcategory.name}
                                 className="w-full h-full object-cover rounded"
                                 onError={(e) => {
-                                  console.error('Erreur de chargement de l\'image (sous-catégorie):', {
-                                    src: e.target.src,
-                                    originalPath: subcategory.image,
-                                    timestamp: new Date().toISOString()
-                                  });
+                                  console.error('Erreur chargement image (sous-catégorie):', e.target.src, 'Path original:', subcategory.image);
                                   e.target.src = getFallbackImage();
                                   e.target.className = 'w-full h-full object-contain bg-gray-100 rounded';
                                 }}
