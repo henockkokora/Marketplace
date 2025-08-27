@@ -6,6 +6,25 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
+// Fonction utilitaire pour résoudre les URLs d'images
+const resolveImageUrl = (imagePath) => {
+  // Image de remplacement si pas de chemin fourni
+  if (!imagePath) {
+    return 'https://via.placeholder.com/100x100?text=No+Image';
+  }
+
+  // Si c'est déjà une URL complète, la retourner
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+
+  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
+  const cleanPath = imagePath.replace(/^[\\/]+/, '');
+
+  // Utiliser getApiUrl pour construire l'URL complète
+  return getApiUrl(`/uploads/${cleanPath}`);
+};
+
 export default function ProductsManager() {
   // --- STATES ---
   const [products, setProducts] = useState([])
@@ -396,23 +415,6 @@ const res = await fetch(getApiUrl(url), {
     )
   }
 
-  function resolveImageUrl(imagePath) {
-    // Image par défaut si pas de chemin fourni
-    if (!imagePath) {
-      return 'https://placehold.co/48x48?text=No+Image';
-    }
-
-    // Si c'est déjà une URL complète, la retourner
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-
-    // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
-    const cleanPath = imagePath.replace(/^[\\/]+/, '');
-
-    // Utiliser getApiUrl pour construire l'URL complète
-    return getApiUrl(`/uploads/${cleanPath}`);
-  }  
 
   // --- RENDER ---
   return (

@@ -4,8 +4,26 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
-const API_BASE = 'http://localhost:4000/api'
+// Fonction utilitaire pour résoudre les URLs d'images
+const resolveImageUrl = (imagePath) => {
+  // Image de remplacement si pas de chemin fourni
+  if (!imagePath) {
+    return 'https://via.placeholder.com/100x100?text=No+Image';
+  }
+
+  // Si c'est déjà une URL complète, la retourner
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+
+  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
+  const cleanPath = imagePath.replace(/^[\\/]+/, '');
+
+  // Utiliser getApiUrl pour construire l'URL complète
+  return getApiUrl(`/uploads/${cleanPath}`);
+};
 
 export default function CategoriesManager() {
   const [categories, setCategories] = useState([])
@@ -28,7 +46,7 @@ export default function CategoriesManager() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/categories`)
+      const res = await fetch(getApiUrl(API_ENDPOINTS.CATEGORIES))
       if (!res.ok) throw new Error('Erreur lors du chargement des catégories')
       const data = await res.json()
       setCategories(data)
@@ -87,21 +105,22 @@ export default function CategoriesManager() {
     }
 
     try {
-      let url = `${API_BASE}/categories`
-      let method = formData._id ? 'PUT' : 'POST'
+      let url, method = formData._id ? 'PUT' : 'POST'
       let headers = {}
       let body
 
       if (formType === 'category') {
-        if (formData._id) url += `/${formData._id}`
+        url = formData._id 
+          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${formData._id}`)
+          : getApiUrl(API_ENDPOINTS.CATEGORIES)
       } else if (formType === 'subcategory') {
         url = formData._id
-          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${formData._id}`
-          : `${API_BASE}/categories/${selectedCategory._id}/subcategories`
+          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${formData._id}`)
+          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories`)
       } else if (formType === 'subsubcategory') {
         url = formData._id
-          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`
-          : `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`
+          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`)
+          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`)
       }
 
       if (formData.image) {
@@ -198,7 +217,6 @@ export default function CategoriesManager() {
   }
 
   const handleDelete = (type, catId, subId = null, subsubId = null) => {
-
     const confirmDelete = () => {
       const toastId = toast.warning(
         <div className="flex flex-col gap-2 p-2">
@@ -217,14 +235,14 @@ export default function CategoriesManager() {
               onClick={async () => {
                 toast.dismiss(toastId);
                 try {
-                  let url = `${API_BASE}/categories`;
+                  let url;
                   
                   if (type === 'category') {
-                    url += `/${catId}`;
+                    url = getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${catId}`);
                   } else if (type === 'subcategory') {
-                    url += `/${catId}/subcategories/${subId}`;
+                    url = getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${catId}/subcategories/${subId}`);
                   } else if (type === 'subsubcategory') {
-                    url += `/${catId}/subcategories/${subId}/subsubcategories/${subsubId}`;
+                    url = getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${catId}/subcategories/${subId}/subsubcategories/${subsubId}`);
                   }
                   
                   const res = await fetch(url, { method: 'DELETE' });
@@ -293,39 +311,6 @@ export default function CategoriesManager() {
     };
     
     confirmDelete();
-
-    // La suppression est maintenant gérée dans la boîte de dialogue de confirmation
-  }
-
-  function resolveImageUrl(imagePath) {
-    try {
-      // Image par défaut si pas de chemin fourni
-      if (!imagePath) {
-        return 'https://placehold.co/48x48?text=No+Image';
-      }
-
-      // Si c'est déjà une URL complète, la retourner
-      if (imagePath.startsWith('http')) {
-        return imagePath;
-      }
-
-      // Nettoyer le chemin pour s'assurer qu'il n'y a pas de double /uploads/
-      let cleanPath = imagePath.replace(/^[\\/]+/, '');
-      
-      // Si le chemin commence déjà par uploads/, on le supprime pour éviter la duplication
-      if (cleanPath.startsWith('uploads/')) {
-        cleanPath = cleanPath.substring(8); // Enlève 'uploads/'
-      }
-
-      // Construire l'URL complète
-      const baseUrl = 'http://localhost:4000/uploads/';
-      const fullUrl = `${baseUrl}${cleanPath}`;
-      
-      return fullUrl;
-    } catch (error) {
-      console.error('Erreur dans resolveImageUrl:', error);
-      return 'https://placehold.co/48x48?text=Error';
-    }
   }
 
   return (
