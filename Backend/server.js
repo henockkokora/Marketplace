@@ -92,9 +92,35 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
-// Configuration CORS
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// Configuration CORS étendue
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://marketplace-9l4q.onrender.com',
+  // Ajoutez d'autres origines autorisées si nécessaire
+];
+
+const corsConfig = {
+  origin: function (origin, callback) {
+    // Autoriser les requêtes sans origine (comme les applications mobiles, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Vérifier si l'origine est autorisée
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
+      console.warn(msg);
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsConfig));
+app.options('*', cors(corsConfig)); // Pré-requêtes OPTIONS
 
 
 // Middleware pour compresser les réponses
@@ -134,8 +160,8 @@ const setupStaticFiles = () => {
     }
   });
 
-  // Configuration simplifiée pour servir les fichiers statiques
-  app.use('/uploads', express.static(baseUploadsDir, {
+  // Configuration des fichiers statiques avec gestion des erreurs
+  const staticOptions = {
     etag: true,
     lastModified: true,
     maxAge: '1y',
@@ -148,8 +174,44 @@ const setupStaticFiles = () => {
         // Mettre en cache pendant 1 an en production
         res.set('Cache-Control', 'public, max-age=31536000, immutable');
       }
+      
+      // Définir le type MIME approprié en fonction de l'extension du fichier
+      const ext = path.split('.').pop().toLowerCase();
+      const mimeTypes = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'svg': 'image/svg+xml',
+      };
+      
+      if (mimeTypes[ext]) {
+        res.set('Content-Type', mimeTypes[ext]);
+      }
     }
-  }));
+  };
+
+  // Middleware pour servir les fichiers statiques avec gestion d'erreurs
+  app.use('/uploads', (req, res, next) => {
+    express.static(baseUploadsDir, staticOptions)(req, res, (err) => {
+      if (err) {
+        console.error('Erreur lors du chargement du fichier statique:', {
+          path: req.path,
+          error: err.message
+        });
+        
+        if (!res.headersSent) {
+          return res.status(404).json({
+            success: false,
+            error: 'Fichier non trouvé',
+            path: req.path
+          });
+        }
+      }
+      next();
+    });
+  });
 
   // Route de débogage pour vérifier l'accès aux fichiers
   app.get('/debug/uploads/*', (req, res) => {

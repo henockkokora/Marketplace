@@ -328,16 +328,27 @@ export default function CategoriesManager() {
                         <Folder size={20} />
                       )}
                     </button> 
-                    <img
-                      src={category.image ? getMediaUrl(category.image) : getFallbackImage()}
-                      alt={category.name}
-                      className="w-12 h-12 object-cover rounded"
-                      onError={(e) => {
-                        console.error('Erreur de chargement de l\'image:', e.target.src);
-                        e.target.src = 'https://placehold.co/48x48?text=No+Image';
-                        e.target.className = 'w-12 h-12 object-contain bg-gray-100 rounded';
-                      }}
-                    />
+                    <div className="relative w-12 h-12 flex-shrink-0">
+                      <img
+                        src={category.image ? getMediaUrl(category.image) : getFallbackImage()}
+                        alt={category.name}
+                        className="w-full h-full object-cover rounded"
+                        onError={(e) => {
+                          console.error('Erreur de chargement de l\'image:', {
+                            src: e.target.src,
+                            originalPath: category.image,
+                            timestamp: new Date().toISOString()
+                          });
+                          e.target.src = getFallbackImage();
+                          e.target.className = 'w-full h-full object-contain bg-gray-100 rounded';
+                        }}
+                        onLoad={(e) => {
+                          if (process.env.NODE_ENV === 'development') {
+                            console.log('Image chargée avec succès:', e.target.src);
+                          }
+                        }}
+                      />
+                    </div>
                     <div>
                       <h3 className="font-semibold text-lg">{category.name}</h3>
                       <p className="text-sm text-gray-500">
@@ -380,16 +391,27 @@ export default function CategoriesManager() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-3">
-                            <img
-                              src={subcategory.image ? getMediaUrl(subcategory.image) : getFallbackImage()}
-                              alt={subcategory.name}
-                              className="w-10 h-10 object-cover rounded"
-                              onError={(e) => {
-                                console.error('Erreur de chargement de l\'image:', e.target.src);
-                                e.target.src = 'https://placehold.co/40x40?text=No+Img';
-                                e.target.className = 'w-10 h-10 object-contain bg-gray-100 rounded';
-                              }}
-                            />
+                            <div className="relative w-10 h-10 flex-shrink-0">
+                              <img
+                                src={subcategory.image ? getMediaUrl(subcategory.image) : getFallbackImage()}
+                                alt={subcategory.name}
+                                className="w-full h-full object-cover rounded"
+                                onError={(e) => {
+                                  console.error('Erreur de chargement de l\'image (sous-catégorie):', {
+                                    src: e.target.src,
+                                    originalPath: subcategory.image,
+                                    timestamp: new Date().toISOString()
+                                  });
+                                  e.target.src = getFallbackImage();
+                                  e.target.className = 'w-full h-full object-contain bg-gray-100 rounded';
+                                }}
+                                onLoad={(e) => {
+                                  if (process.env.NODE_ENV === 'development') {
+                                    console.log('Image de sous-catégorie chargée avec succès:', e.target.src);
+                                  }
+                                }}
+                              />
+                            </div>
                             <div>
                               <h4 className="font-medium">{subcategory.name}</h4>
                               
