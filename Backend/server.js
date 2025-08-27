@@ -103,14 +103,15 @@ app.use(compression());
 // Middleware pour parser le JSON
 app.use(express.json({ limit: '10mb' }));
 
-// Middleware pour optimiser les images
-app.use('/uploads', imageOptimizer());
+// Désactivation temporaire de l'optimisation d'images
+// app.use('/uploads', imageOptimizer());
 
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware de journalisation (désactivé en production)
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
     next();
   });
 }
@@ -133,28 +134,34 @@ const setupStaticFiles = () => {
     }
   });
 
-  // Middleware pour servir les fichiers statiques
-  app.use('/uploads', (req, res, next) => {
-    // Ignorer les requêtes sans extension de fichier
-    if (!path.extname(req.path)) {
-      return next();
-    }
-    
-    // Désactiver le cache en développement
-    if (process.env.NODE_ENV === 'development') {
-      res.set('Cache-Control', 'no-store');
-    } else {
-      // Mettre en cache pendant 1 an en production
-      res.set('Cache-Control', 'public, max-age=31536000, immutable');
-    }
-    
-    next();
-  }, express.static(baseUploadsDir, {
+  // Configuration simplifiée pour servir les fichiers statiques
+  app.use('/uploads', express.static(baseUploadsDir, {
     etag: true,
     lastModified: true,
     maxAge: '1y',
-    immutable: true
+    immutable: true,
+    setHeaders: (res, path) => {
+      // Désactiver le cache en développement
+      if (process.env.NODE_ENV === 'development') {
+        res.set('Cache-Control', 'no-store');
+      } else {
+        // Mettre en cache pendant 1 an en production
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }
   }));
+
+  // Route de débogage pour vérifier l'accès aux fichiers
+  app.get('/debug/uploads/*', (req, res) => {
+    const filePath = path.join(baseUploadsDir, req.params[0]);
+    console.log('Tentative d\'accès au fichier:', filePath);
+    console.log('Le fichier existe:', fs.existsSync(filePath));
+    res.json({
+      path: filePath,
+      exists: fs.existsSync(filePath),
+      isFile: fs.existsSync(filePath) ? fs.statSync(filePath).isFile() : false
+    });
+  });
 };
 
 // Initialisation des fichiers statiques

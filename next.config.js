@@ -5,12 +5,19 @@ const nextConfig = {
   },
   images: { 
     unoptimized: true,
-    domains: [
-      'localhost',
-      'res.cloudinary.com',
-      'marketplace-9l4q.onrender.com',  // Votre backend
-      'votre-nom-de-domaine.com'       // Votre domaine personnalisé si vous en avez un
-    ].filter(Boolean),  // Filtre les valeurs vides
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4000',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'marketplace-9l4q.onrender.com',
+        pathname: '/uploads/**',
+      },
+    ],
   },
   async headers() {
     return [
