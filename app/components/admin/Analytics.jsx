@@ -65,7 +65,7 @@ export default function Analytics() {
   const fetchSubscribers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/api/newsletter/subscribers', {
+      const response = await fetch(getApiUrl(`${API_ENDPOINTS.NEWSLETTER}/subscribers`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

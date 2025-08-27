@@ -187,8 +187,8 @@ export default function ProductsManager() {
       })
 
       const url = editingProduct && editingProduct._id 
-        ? `${API_BASE}/products/${editingProduct._id}`
-        : `${API_BASE}/products`
+        ? getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${editingProduct._id}`)
+        : getApiUrl(API_ENDPOINTS.PRODUCTS)
       
       const method = editingProduct && editingProduct._id ? 'PUT' : 'POST'
       
@@ -241,7 +241,7 @@ const res = await fetch(getApiUrl(url), {
       
       const newStatus = product.status === 'active' ? 'inactive' : 'active';
       
-      const res = await fetch(`${API_BASE}/products/${id}/status`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${id}/status`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ const res = await fetch(getApiUrl(url), {
       
       const newSpecialOffer = !product.isSpecialOffer;
       
-      const res = await fetch(`${API_BASE}/products/${id}/special-offer`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${id}/special-offer`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -323,7 +323,7 @@ const res = await fetch(getApiUrl(url), {
               onClick={async () => {
                 toast.dismiss(toastId);
                 try {
-                  const res = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
+                  const res = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${id}`), { method: 'DELETE' });
                   if (!res.ok) {
                     const errorRes = await res.json().catch(() => ({}));
                     throw new Error(errorRes.error || 'Erreur lors de la suppression');

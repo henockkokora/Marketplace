@@ -1,9 +1,9 @@
 import { TrendingUp, Package, ShoppingCart, Users, DollarSign, Folder } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function Dashboard() {
-  const API_BASE = 'http://localhost:4000/api'
   const [analyticsData, setAnalyticsData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -29,7 +29,7 @@ export default function Dashboard() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/analytics`)
+      const res = await fetch(getApiUrl(API_ENDPOINTS.ANALYTICS))
       if (!res.ok) throw new Error('Erreur lors du chargement des statistiques')
       const data = await res.json()
       setAnalyticsData(data)

@@ -95,12 +95,12 @@ export default function CategoriesManager() {
         if (formData._id) url += `/${formData._id}`
       } else if (formType === 'subcategory') {
         url = formData._id
-          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${formData._id}`
-          : `${API_BASE}/categories/${selectedCategory._id}/subcategories`
+          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${formData._id}`)
+          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories`)
       } else if (formType === 'subsubcategory') {
         url = formData._id
-          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`
-          : `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`
+          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`)
+          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`)
       }
 
       if (formData.image) {
@@ -216,7 +216,7 @@ export default function CategoriesManager() {
               onClick={async () => {
                 toast.dismiss(toastId);
                 try {
-                  let url = `${API_BASE}/categories`;
+                  let url = getApiUrl(API_ENDPOINTS.CATEGORIES);
                   
                   if (type === 'category') {
                     url += `/${catId}`;
