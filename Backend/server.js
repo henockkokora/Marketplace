@@ -67,6 +67,19 @@ process.on('uncaughtException', (err) => {
 });
 
 // Configuration CORS
+const allowedOrigins = [
+  // URLs de développement
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  
+  // Votre domaine Vercel (remplacez par votre URL réelle)
+  'https://marketplace-topaz-six.vercel.app',
+  'https://*.vercel.app',
+  
+  // Autres domaines de production
+  'https://marketplace-9l4q.onrender.com',
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
     // En développement, on autorise toutes les origines
@@ -75,38 +88,107 @@ const corsOptions = {
     }
     
     // En production, on vérifie l'origine
-    const allowedOrigins = [
-      'https://votre-frontend.vercel.app',
-      // Ajoutez d'autres domaines de production ici
-    ];
-
-    // Autoriser les requêtes sans origine (applications mobiles, Postman, etc.)
-    // En production, il est recommandé de restreindre cela
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.some(allowedOrigin => 
+      origin === allowedOrigin || 
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com')
+    )) {
       callback(null, true);
     } else {
       console.warn('Tentative de connexion depuis une origine non autorisée:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
     'Content-Length', 
     'X-Requested-With',
     'Accept',
+    'Accept-Encoding',
+    'Accept-Language',
     'Origin',
-    'X-Auth-Token'
+    'X-Auth-Token',
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ],
+  exposedHeaders: [
+    'Content-Length',
+    'X-Foo',
+    'X-Bar',
+    'Authorization'
   ],
   credentials: true,
-  optionsSuccessStatus: 200,
-  maxAge: 86400 // 24 heures
+  optionsSuccessStatus: 204,
+  maxAge: 86400, // 24 heures
+  preflightContinue: false
 };
 
-// Middleware CORS
+// Middleware CORS personnalisé
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Vérifier si l'origine est autorisée
+  if (
+    process.env.NODE_ENV !== 'production' || 
+    !origin || 
+    allowedOrigins.some(allowedOrigin => 
+      origin === allowedOrigin || 
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com')
+    )
+  ) {
+    // Définir les en-têtes CORS
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Origin, Accept-Encoding, Accept-Language');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    // Répondre immédiatement aux requêtes OPTIONS (pré-vol)
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
+  } else {
+    console.warn('Tentative de connexion depuis une origine non autorisée:', origin);
+    return res.status(403).json({ message: 'Not allowed by CORS' });
+  }
+  
+  next();
+});
+
+// Utiliser également le middleware CORS standard pour une meilleure compatibilité
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable preflight for all routes
+
+// Middleware pour vérifier les en-têtes de réponse
+app.use((req, res, next) => {
+  // Sauvegarder la méthode d'envoi originale
+  const _send = res.send;
+  
+  // Intercepter la méthode send pour ajouter des en-têtes si nécessaire
+  res.send = function(body) {
+    // S'assurer que les en-têtes CORS sont définis
+    if (!res.getHeader('Access-Control-Allow-Origin')) {
+      const origin = req.headers.origin;
+      if (origin && allowedOrigins.some(allowedOrigin => 
+        origin === allowedOrigin || 
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com')
+      )) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
+    }
+    
+    // Appeler la méthode send originale
+    return _send.call(this, body);
+  };
+  
+  next();
+});
 
 // Middleware pour compresser les réponses
 app.use(compression());
