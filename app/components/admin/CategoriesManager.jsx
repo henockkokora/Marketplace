@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
+
+const API_BASE = 'http://localhost:4000/api'
 
 export default function CategoriesManager() {
   const [categories, setCategories] = useState([])
@@ -27,7 +28,7 @@ export default function CategoriesManager() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(getApiUrl(API_ENDPOINTS.CATEGORIES))
+      const res = await fetch(`${API_BASE}/categories`)
       if (!res.ok) throw new Error('Erreur lors du chargement des catégories')
       const data = await res.json()
       setCategories(data)
@@ -86,7 +87,7 @@ export default function CategoriesManager() {
     }
 
     try {
-      let url = getApiUrl(API_ENDPOINTS.CATEGORIES)
+      let url = `${API_BASE}/categories`
       let method = formData._id ? 'PUT' : 'POST'
       let headers = {}
       let body
@@ -95,12 +96,12 @@ export default function CategoriesManager() {
         if (formData._id) url += `/${formData._id}`
       } else if (formType === 'subcategory') {
         url = formData._id
-          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${formData._id}`)
-          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories`)
+          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${formData._id}`
+          : `${API_BASE}/categories/${selectedCategory._id}/subcategories`
       } else if (formType === 'subsubcategory') {
         url = formData._id
-          ? getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`)
-          : getApiUrl(`${API_ENDPOINTS.CATEGORIES}/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`)
+          ? `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories/${formData._id}`
+          : `${API_BASE}/categories/${selectedCategory._id}/subcategories/${selectedSubcategory._id}/subsubcategories`
       }
 
       if (formData.image) {
@@ -216,7 +217,7 @@ export default function CategoriesManager() {
               onClick={async () => {
                 toast.dismiss(toastId);
                 try {
-                  let url = getApiUrl(API_ENDPOINTS.CATEGORIES);
+                  let url = `${API_BASE}/categories`;
                   
                   if (type === 'category') {
                     url += `/${catId}`;
@@ -226,7 +227,7 @@ export default function CategoriesManager() {
                     url += `/${catId}/subcategories/${subId}/subsubcategories/${subsubId}`;
                   }
                   
-                  const res = await fetch(getApiUrl(url), { method: 'DELETE' });
+                  const res = await fetch(url, { method: 'DELETE' });
                   if (!res.ok) {
                     const errorRes = await res.json().catch(() => ({}));
                     throw new Error(errorRes.error || 'Erreur lors de la suppression');
@@ -316,8 +317,11 @@ export default function CategoriesManager() {
         cleanPath = cleanPath.substring(8); // Enlève 'uploads/'
       }
 
-      // Utiliser getApiUrl pour construire l'URL complète
-      return getApiUrl(`/uploads/${cleanPath}`);
+      // Construire l'URL complète
+      const baseUrl = 'http://localhost:4000/uploads/';
+      const fullUrl = `${baseUrl}${cleanPath}`;
+      
+      return fullUrl;
     } catch (error) {
       console.error('Erreur dans resolveImageUrl:', error);
       return 'https://placehold.co/48x48?text=Error';
