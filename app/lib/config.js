@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   AUTH: '/auth',
   NEWSLETTER: '/newsletter',
   ANALYTICS: '/analytics',
+  SUBCATEGORIES: '/subcategories',
 };
 
 export const getApiUrl = (endpoint = '') => {
