@@ -5,20 +5,26 @@ import { useCart } from '../../context/CartContext'
 import { getApiUrl } from '@/app/lib/config'
 
 const resolveImageUrl = (imagePath) => {
-  if (!imagePath) return 'https://placehold.co/200x200?text=No+Image';
-  if (imagePath.startsWith('http')) return imagePath;
+  // Image de remplacement si pas de chemin fourni
+  if (!imagePath) {
+    return 'https://via.placeholder.com/300x200?text=No+Image';
+  }
+
+  // Si c'est déjà une URL complète, la retourner
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+
+  // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
+  const cleanPath = imagePath.replace(/^[\\/]+/, '');
   
-  // Nettoyer les backslashes et les doublons de /uploads/
-  let cleanPath = imagePath.replace(/\\/g, '/');
-  cleanPath = cleanPath.replace(/([^:]\/)\/+/g, '$1');
-  
-  // Ajouter le préfixe /uploads/ si nécessaire
-  if (!cleanPath.startsWith('/uploads/') && !cleanPath.startsWith('http')) {
-    cleanPath = `/uploads/${cleanPath}`;
+  // En production, les fichiers sont servis directement depuis /uploads
+  if (process.env.NODE_ENV === 'production') {
+    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
   }
   
-  // Ajouter le préfixe de l'URL du backend
-  return `${getApiUrl('')}${cleanPath}`;
+  // En développement, on utilise le chemin complet avec /api/uploads
+  return `http://localhost:4000/api/uploads/${cleanPath}`;
 };
 
 export default function Cart({ isOpen, onClose }) {

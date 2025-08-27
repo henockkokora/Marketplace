@@ -10,7 +10,7 @@ import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 const resolveImageUrl = (imagePath) => {
   // Image de remplacement si pas de chemin fourni
   if (!imagePath) {
-    return 'https://via.placeholder.com/100x100?text=No+Image';
+    return 'https://via.placeholder.com/300x200?text=No+Image';
   }
 
   // Si c'est déjà une URL complète, la retourner
@@ -20,9 +20,14 @@ const resolveImageUrl = (imagePath) => {
 
   // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
   const cleanPath = imagePath.replace(/^[\\/]+/, '');
-
-  // Utiliser getApiUrl pour construire l'URL complète
-  return getApiUrl(`/uploads/${cleanPath}`);
+  
+  // En production, les fichiers sont servis directement depuis /uploads
+  if (process.env.NODE_ENV === 'production') {
+    return `https://marketplace-9l4q.onrender.com/uploads/${cleanPath}`;
+  }
+  
+  // En développement, on utilise le chemin complet avec /api/uploads
+  return `http://localhost:4000/api/uploads/${cleanPath}`;
 };
 
 export default function ProductsManager() {

@@ -20,8 +20,14 @@ const resolveImageUrl = (imagePath) => {
 
   // Nettoyer le chemin pour s'assurer qu'il n'y a pas de slashs au début
   const cleanPath = imagePath.replace(/^[\\/]+/, '');
-
-  // Utiliser getApiUrl pour construire l'URL complète
+  
+  // En production, les fichiers sont servis directement depuis /uploads
+  if (process.env.NODE_ENV === 'production') {
+    const baseUrl = getApiUrl('').replace('/api', ''); // Retire /api pour les fichiers statiques
+    return `${baseUrl}/uploads/${cleanPath}`;
+  }
+  
+  // En développement, on utilise le chemin complet avec /api/uploads
   return getApiUrl(`/uploads/${cleanPath}`);
 };
 
