@@ -68,6 +68,7 @@ process.on('uncaughtException', (err) => {
 
 // Configuration CORS
 const allowedOrigins = [
+  'http://localhost:3000',
   'http://localhost:4000',
   'http://127.0.0.1:4000',
   'https://marketplace-topaz-six.vercel.app',
@@ -76,41 +77,26 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Autorise toutes les origines en développement
-    if (!origin || process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    // Autorise seulement les domaines whitelistés en production
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-};
-
-// Configuration CORS étendue
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://marketplace-9l4q.onrender.com',
-  // Ajoutez d'autres origines autorisées si nécessaire
-];
-
-const corsConfig = {
-  origin: function (origin, callback) {
     // Autoriser les requêtes sans origine (comme les applications mobiles, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // Vérifier si l'origine est autorisée
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
-      console.warn(msg);
-      return callback(new Error(msg), false);
+    // En développement, on autorise toutes les origines
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // En production, on vérifie l'origine
+    if (
+      allowedOrigins.includes(origin) || 
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com')
+    ) {
+      return callback(null, true);
+    }
+    
+    const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
+    console.warn(msg);
+    return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -119,8 +105,8 @@ const corsConfig = {
   optionsSuccessStatus: 200
 };
 
-app.use(cors(corsConfig));
-app.options('*', cors(corsConfig)); // Pré-requêtes OPTIONS
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Pré-requêtes OPTIONS
 
 
 // Middleware pour compresser les réponses
