@@ -66,9 +66,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// Configuration CORS simple et robuste
-const cors = require('cors');
-
+// Configuration CORS
 const allowedOrigins = [
   'http://localhost:4000',
   'http://127.0.0.1:4000',
@@ -88,9 +86,13 @@ const corsOptions = {
     }
     return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 };
 
+// Configuration CORS
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
