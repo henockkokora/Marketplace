@@ -26,12 +26,21 @@ export const getMediaUrl = (path = '') => {
     // Log pour le débogage
     console.log(`[getMediaUrl] Chemin initial: ${path}, Nettoyé: ${cleanPath}`);
     
-    // Déterminer le préfixe approprié
+    // Si le chemin commence par un slash, on le supprime
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+      console.log(`[getMediaUrl] Slash initial supprimé: ${cleanPath}`);
+    }
+    
+    // Ne pas ajouter de préfixe s'il est déjà présent
     if (!cleanPath.startsWith('uploads/') && 
         !cleanPath.startsWith('categories/') && 
         !cleanPath.startsWith('products/')) {
-      cleanPath = `uploads/${cleanPath}`;
-      console.log(`[getMediaUrl] Préfixe 'uploads/' ajouté: ${cleanPath}`);
+      // Si le chemin contient déjà 'categories' ou 'products', on ne fait rien
+      if (!cleanPath.includes('categories/') && !cleanPath.includes('products/')) {
+        cleanPath = `uploads/${cleanPath}`;
+        console.log(`[getMediaUrl] Préfixe 'uploads/' ajouté: ${cleanPath}`);
+      }
     }
     
     // Construire l'URL complète
@@ -54,8 +63,25 @@ export const getMediaUrl = (path = '') => {
   }
 };
 
+// Génère une image SVG en base64 comme fallback
 export const getFallbackImage = () => {
-  return 'https://via.placeholder.com/300x200?text=Image+Non+Disponible';
+  // Vérifier si on est côté navigateur
+  if (typeof window !== 'undefined') {
+    // Création d'une image SVG simple avec un fond gris et du texte
+    const svg = `<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f0f0f0"/>
+      <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" dominant-baseline="middle" fill="#666">
+        Image Non Disponible
+      </text>
+    </svg>`;
+    
+    // Encodage en base64
+    const base64Svg = btoa(unescape(encodeURIComponent(svg)));
+    return `data:image/svg+xml;base64,${base64Svg}`;
+  } else {
+    // Retourne une URL vide côté serveur
+    return '';
+  }
 };
 
 // Pour le débogage

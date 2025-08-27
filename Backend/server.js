@@ -10,19 +10,32 @@ const compression = require('compression');
 const { imageOptimizer } = require('./utils/imageOptimizer');
 
 // Configuration des variables d'environnement
-if (process.env.NODE_ENV !== 'production') {
-  try {
-    const envPath = path.resolve(__dirname, '.env');
-    const result = dotenv.config({ path: envPath });
-    
-    if (result.error) {
-      console.warn('Mode développement: Fichier .env non trouvé. Vérifiez les variables d\'environnement.');
-    } else {
-      console.log('Fichier .env chargé avec succès');
-    }
-  } catch (error) {
-    console.warn('Mode développement: Erreur lors du chargement du .env:', error.message);
+try {
+  const envPath = path.resolve(__dirname, '.env');
+  const result = dotenv.config({ path: envPath });
+  
+  if (result.error && process.env.NODE_ENV !== 'production') {
+    console.warn('Mode développement: Fichier .env non trouvé ou erreur de chargement:', result.error);
+  } else if (result.parsed) {
+    console.log('Fichier .env chargé avec succès');
   }
+} catch (error) {
+  console.warn('Erreur lors du chargement du .env:', error.message);
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Erreur critique en production, arrêt du serveur');
+    process.exit(1);
+  }
+}
+
+// Afficher les variables d'environnement chargées (sans les valeurs sensibles)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Configuration du serveur:', {
+    NODE_ENV: process.env.NODE_ENV,
+    MONGODB_URI: process.env.MONGODB_URI ? '***' : 'non défini',
+    JWT_SECRET: process.env.JWT_SECRET ? '***' : 'non défini',
+    PORT: process.env.PORT || 4000,
+    BASE_URL: process.env.BASE_URL || 'http://localhost:4000'
+  });
 }
 
 // Vérification des variables d'environnement requises
@@ -53,6 +66,55 @@ const ordersRouter = require('./routes/orders');
 const analyticsRouter = require('./routes/analytics');
 const newsletterRouter = require('./routes/newsletterRoutes');
 
+// Configuration CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:4000',
+  'https://marketplace-topaz-six.vercel.app',
+  'https://marketplace-9l4q.onrender.com'
+];
+
+// URL de base pour les médias
+const MEDIA_BASE_URL = process.env.MEDIA_BASE_URL || 'http://localhost:4000';
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // En développement, on autorise toutes les origines
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[CORS] Requête autorisée (développement) depuis: ${origin || 'sans origine'}`);
+      return callback(null, true);
+    }
+    
+    // Autoriser les requêtes sans origine (comme les requêtes côté serveur)
+    if (!origin) {
+      console.log('[CORS] Requête sans origine autorisée');
+      return callback(null, true);
+    }
+    
+    // Vérifier si l'origine est autorisée
+    const isAllowed = allowedOrigins.includes(origin) || 
+                     origin.endsWith('.vercel.app') ||
+                     origin.endsWith('.onrender.com');
+    
+    if (isAllowed) {
+      console.log(`[CORS] Origine autorisée: ${origin}`);
+      return callback(null, true);
+    }
+    
+    const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
+    console.warn(`[CORS] ${msg}`);
+    return callback(new Error(msg), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 200
+};
+
+// Configuration de base d'Express
 const app = express();
 
 // Gestion des erreurs non attrapées
@@ -66,64 +128,27 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// Configuration CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:4000',
-  'http://127.0.0.1:4000',
-  'https://marketplace-topaz-six.vercel.app',
-  'https://marketplace-9l4q.onrender.com'
-];
+// Configuration de la confiance du proxy (nécessaire pour les en-têtes X-Forwarded-*)
+app.set('trust proxy', 1);
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Autoriser les requêtes sans origine (comme les applications mobiles, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    // En développement, on autorise toutes les origines
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    
-    // En production, on vérifie l'origine
-    if (
-      allowedOrigins.includes(origin) || 
-      origin.endsWith('.vercel.app') ||
-      origin.endsWith('.onrender.com')
-    ) {
-      return callback(null, true);
-    }
-    
-    const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
-    console.warn(msg);
-    return callback(new Error(msg), false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
-  optionsSuccessStatus: 200
-};
-
+// Middleware CORS
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Pré-requêtes OPTIONS
-
 
 // Middleware pour compresser les réponses
 app.use(compression());
 
 // Middleware pour parser le JSON
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Désactivation temporaire de l'optimisation d'images
 // app.use('/uploads', imageOptimizer());
 
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
 // Middleware de journalisation (désactivé en production)
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
     next();
   });
 }
@@ -179,23 +204,74 @@ const setupStaticFiles = () => {
   };
 
   // Middleware pour servir les fichiers statiques avec gestion d'erreurs
+  const serveStatic = express.static(baseUploadsDir, {
+    ...staticOptions,
+    fallthrough: false // Empêche le passage au middleware suivant si le fichier n'est pas trouvé
+  });
+
+  // Route pour les fichiers statiques
   app.use('/uploads', (req, res, next) => {
-    express.static(baseUploadsDir, staticOptions)(req, res, (err) => {
+    // Log pour le débogage
+    console.log(`[Static Files] Tentative d'accès à: ${req.path}`);
+    
+    // Vérifier si le fichier existe avant de le servir
+    const filePath = path.join(baseUploadsDir, req.path);
+    
+    fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err) {
-        console.error('Erreur lors du chargement du fichier statique:', {
-          path: req.path,
+        console.error(`[Static Files] Fichier non trouvé: ${filePath}`);
+        return res.status(404).json({
+          success: false,
+          error: 'Fichier non trouvé',
+          path: req.path
+        });
+      }
+      
+      // Si le fichier existe, le servir avec express.static
+      serveStatic(req, res, (err) => {
+        if (err) {
+          console.error('[Static Files] Erreur lors du chargement du fichier:', {
+            path: req.path,
+            error: err.message,
+            stack: err.stack
+          });
+          
+          if (!res.headersSent) {
+            return res.status(500).json({
+              success: false,
+              error: 'Erreur lors du chargement du fichier',
+              path: req.path
+            });
+          }
+        }
+        next();
+      });
+    });
+  });
+  
+  // Route de débogage pour vérifier l'accès aux fichiers
+  app.get('/debug/uploads/*', (req, res) => {
+    const filePath = path.join(baseUploadsDir, req.params[0]);
+    console.log('[Debug] Vérification du fichier:', filePath);
+    
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        return res.status(404).json({
+          exists: false,
+          path: filePath,
           error: err.message
         });
-        
-        if (!res.headersSent) {
-          return res.status(404).json({
-            success: false,
-            error: 'Fichier non trouvé',
-            path: req.path
-          });
-        }
       }
-      next();
+      
+      const stats = fs.statSync(filePath);
+      res.json({
+        exists: true,
+        path: filePath,
+        isFile: stats.isFile(),
+        size: stats.size,
+        created: stats.birthtime,
+        modified: stats.mtime
+      });
     });
   });
 
@@ -215,35 +291,52 @@ const setupStaticFiles = () => {
 // Initialisation des fichiers statiques
 setupStaticFiles();
 
-// if (process.env.NODE_ENV === 'development') {
-//   app.use((req, res, next) => {
-//     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-//     next();
-//   });
-// }
-
-// Routes API
+// Configuration des routes API
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/categories/:categoryId/subcategories', subcategoriesRouter);
-app.use('/api/subcategories', subcategoriesRouter); // Nouvelle route pour toutes les sous-catégories
+app.use('/api/subcategories', subcategoriesRouter);
 app.use('/api/categories/:categoryId/subcategories/:subcategoryId/subsubcategories', subsubcategoriesRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/newsletter', newsletterRouter);
 
+// Route de test
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version
+  });
+});
+
 // Gestion des erreurs 404
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route non trouvée' });
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint non trouvé',
+    path: req.originalUrl
+  });
 });
 
 // Gestion des erreurs globales
 app.use((err, req, res, next) => {
-  console.error('Erreur:', err);
-  res.status(500).json({ 
-    error: 'Une erreur est survenue sur le serveur',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  console.error('Erreur non gérée:', {
+    error: err.message,
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+  
+  res.status(err.status || 500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Une erreur est survenue sur le serveur' 
+      : err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
   });
 });
 
