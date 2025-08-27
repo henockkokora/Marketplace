@@ -3,7 +3,6 @@ const router = express.Router()
 const Category = require('../models/Category')
 const multer = require('multer');
 const cloudinary = require('../utils/cloudinary');
-const Category = require('../models/Category');
 
 const createSlug = (name) => name.toLowerCase().replace(/\s+/g, '-');
 
