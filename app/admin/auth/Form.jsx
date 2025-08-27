@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getApiUrl, API_ENDPOINTS } from '../../../lib/config';
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(30px); }

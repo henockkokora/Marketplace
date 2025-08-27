@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users, Eye, Download, Mail } from 'lucide-react'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('month')

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, Star } from 'lucide-react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function ProductsManager() {
   // --- STATES ---

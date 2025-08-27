@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X, Key, Eye, EyeOff, CheckCircle } from 'lucide-react'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 
 export default function SettingsPanel({ isOpen, onClose }) {

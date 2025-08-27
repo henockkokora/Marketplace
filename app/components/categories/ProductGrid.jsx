@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Star, ShoppingCart, Trash2 } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { toast } from 'react-toastify'
-import { getApiUrl } from '../../lib/config'
+import { getApiUrl } from '@/app/lib/config'
 
 const resolveImageUrl = (imagePath) => {
   if (!imagePath) return 'https://placehold.co/200x200?text=No+Image';

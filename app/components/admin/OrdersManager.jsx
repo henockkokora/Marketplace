@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Filter, Eye, CheckCircle, XCircle, Truck, Package, FileText, Download } from 'lucide-react'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 // Animation CSS injectée dynamiquement pour le clignotement rapide du badge
 if (typeof window !== 'undefined' && !document.getElementById('pulse-fast-keyframes')) {

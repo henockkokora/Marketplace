@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, User, Mail, Phone, ShoppingCart, ArrowLeft, MoreVertical } from 'lucide-react'
-import { getApiUrl, API_ENDPOINTS } from '../../../lib/config'
+import { Search, User, Mail, Phone, ArrowLeft, MoreVertical } from 'lucide-react'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState([])

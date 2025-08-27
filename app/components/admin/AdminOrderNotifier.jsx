@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef } from "react"
-import { getApiUrl, API_ENDPOINTS } from "../../lib/config"
+import { getApiUrl, API_ENDPOINTS } from "@/app/lib/config"
 
 export default function AdminOrderNotifier() {
   const audioRef = useRef(null)

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Star, ShoppingCart, Truck, Shield, RotateCcw, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useCart } from '../../context/CartContext'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function ProductInfo({ product }) {
   const router = useRouter();

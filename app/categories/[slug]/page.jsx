@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Layout from '../../components/layout/Layout'
-import CategoryBanner from '../../components/categories/CategoryBanner'
 import ProductFilters from '../../components/categories/ProductFilters'
 import ProductGrid from '../../components/categories/ProductGrid'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 
 export default function CategoryPage() {
   const params = useParams()

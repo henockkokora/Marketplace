@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config';
 import Link from 'next/link';
 
 export default function SpecialOffers() {

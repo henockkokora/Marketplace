@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config';
 import { Mail } from 'lucide-react'
 
 export default function Newsletter() {

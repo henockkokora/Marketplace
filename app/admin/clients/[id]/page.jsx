@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { User, Mail, Phone, MapPin, ArrowLeft, Edit } from 'lucide-react'
+import { User, Mail, Phone, MapPin, ArrowLeft } from 'lucide-react'
 
 // Données de démonstration
 const mockClient = {

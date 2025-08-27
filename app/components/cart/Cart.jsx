@@ -2,7 +2,7 @@
 
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
-import { getApiUrl } from '../../lib/config'
+import { getApiUrl } from '@/app/lib/config'
 
 const resolveImageUrl = (imagePath) => {
   if (!imagePath) return 'https://placehold.co/200x200?text=No+Image';

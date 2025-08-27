@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
-import { getApiUrl, API_ENDPOINTS } from '../../lib/config';
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config';
 
 export default function SimilarProducts({ category, currentId }) {
   const [similarProducts, setSimilarProducts] = useState([]);
