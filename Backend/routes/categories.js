@@ -1,61 +1,25 @@
 const express = require('express')
 const router = express.Router()
 const Category = require('../models/Category')
-const multer = require('multer')
-const path = require('path')
-const fs = require('fs')
+const multer = require('multer');
+const cloudinary = require('../utils/cloudinary');
+const Category = require('../models/Category');
 
-const createSlug = (name) => name.toLowerCase().replace(/\s+/g, '-')
+const createSlug = (name) => name.toLowerCase().replace(/\s+/g, '-');
 
-// Configuration de multer pour les catégories
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(process.cwd(), 'uploads/categories')
-    
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true })
-    }
-    
-    cb(null, uploadPath)
-  },
-  filename: (req, file, cb) => {
-    try {
-      // Récupérer l'extension du fichier
-      const ext = path.extname(file.originalname).toLowerCase()
-      // Créer un nom de fichier unique avec timestamp
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`
-      const finalFileName = `category-${uniqueSuffix}${ext}`
-      
-      // Fichier de catégorie reçu et renommé
-      cb(null, finalFileName)
-    } catch (error) {
-      console.error('[Multer] Erreur lors de la génération du nom de fichier:', error)
-      cb(error)
-    }
-  }
-})
+// Utiliser memoryStorage pour garder le fichier en buffer
+const storage = multer.memoryStorage();
 
-// Filtre pour les types de fichiers acceptés
+// Filtre pour les types de fichiers
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true)
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
   } else {
-    const error = new Error(`Type de fichier non supporté: ${file.mimetype}. Formats acceptés: JPEG, PNG, WebP`)
-    console.error(`[Multer] ${error.message}`)
-    cb(error, false)
+    cb(new Error('Seules les images sont autorisées!'), false);
   }
-}
+};
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB max par fichier
-  }
-})
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // GET all categories
 router.get('/', async (req, res) => {
@@ -90,19 +54,20 @@ router.post('/', upload.single('image'), async (req, res) => {
     const exists = await Category.findOne({ slug })
     if (exists) return res.status(409).json({ error: 'Catégorie existe déjà' })
 
-    let imagePath = ''
+    let imageUrl = '';
     if (req.file) {
-      // Construire le chemin relatif pour la base de données
-      const relativePath = path.relative(
-        path.join(process.cwd(), 'uploads'),
-        req.file.path
-      ).replace(/\\/g, '/') // Remplacer les backslashes par des slashes
-      
-      // S'assurer que le chemin commence par un slash
-      imagePath = `/${relativePath}`
+      // Uploader l'image sur Cloudinary
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        {
+          folder: 'categories',
+          public_id: `category-${slug}-${Date.now()}`
+        }
+      );
+      imageUrl = result.secure_url;
     }
 
-    const category = await Category.create({ name, slug, image: imagePath, subcategories: [] })
+    const category = await Category.create({ name, slug, image: imageUrl, subcategories: [] });
     res.status(201).json(category)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -112,45 +77,51 @@ router.post('/', upload.single('image'), async (req, res) => {
 // PUT update category
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const { name } = req.body
-    if (!name) return res.status(400).json({ error: 'Nom requis' })
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nom requis' });
 
-    const slug = createSlug(name)
-    const updateData = { name, slug }
+    const slug = createSlug(name);
+    const updateData = { name, slug };
+
     if (req.file) {
-      // Construire le chemin relatif pour la base de données
-      const relativePath = path.relative(
-        path.join(process.cwd(), 'uploads'),
-        req.file.path
-      ).replace(/\\/g, '/') // Remplacer les backslashes par des slashes
-      
-      // S'assurer que le chemin commence par un slash
-      updateData.image = `/${relativePath}`
-      // Le chemin de l'image a été mis à jour
-      
-      // Supprimer l'ancienne image si elle existe
-      try {
-        const oldCategory = await Category.findById(req.params.id)
-        if (oldCategory && oldCategory.image) {
-          const oldImagePath = path.join(process.cwd(), 'uploads', oldCategory.image)
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath)
-            // Ancienne image supprimée avec succès
+      // Uploader la nouvelle image sur Cloudinary
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        {
+          folder: 'categories',
+          public_id: `category-${slug}-${Date.now()}`,
+          overwrite: true
+        }
+      );
+      updateData.image = result.secure_url;
+
+      // Supprimer l'ancienne image de Cloudinary si elle existe
+      const oldCategory = await Category.findById(req.params.id);
+      if (oldCategory && oldCategory.image && oldCategory.image.includes('cloudinary')) {
+        // Extrait le public_id de l'URL pour la suppression
+        const publicId = oldCategory.image.split('/').pop().split('.')[0];
+        const folder = oldCategory.image.split('/')[oldCategory.image.split('/').length - 2];
+        if (folder && publicId) {
+          try {
+            await cloudinary.uploader.destroy(`${folder}/${publicId}`);
+          } catch (e) {
+            console.error("Erreur lors de la suppression de l'ancienne image sur Cloudinary:", e);
           }
         }
-      } catch (err) {
-        console.error('Erreur lors de la suppression de l\'ancienne image:', err)
       }
     }
 
-    const updated = await Category.findByIdAndUpdate(req.params.id, updateData, { new: true })
-    if (!updated) return res.status(404).json({ error: 'Catégorie non trouvée' })
+    const updatedCategory = await Category.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
-    res.json(updated)
+    if (!updatedCategory) {
+      return res.status(404).json({ error: 'Catégorie non trouvée' });
+    }
+
+    res.json(updatedCategory);
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
 // DELETE category
 router.delete('/:id', async (req, res) => {

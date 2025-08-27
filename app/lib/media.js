@@ -7,16 +7,25 @@ const MEDIA_BASE = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://localhost:4
  * @returns {string} URL complète du média
  */
 export const getMediaUrl = (path = '') => {
-  if (!path) return '';
-  // On retire le slash initial si présent
+  if (!path) {
+    return ''; // Retourne une chaîne vide si le chemin est manquant
+  }
+
+  // Si le chemin est déjà une URL complète (ex: Cloudinary), on la retourne directement.
+  if (path.startsWith('http')) {
+    return path;
+  }
+
+  // --- Logique de secours pour les anciens chemins relatifs ---
+  // Ceci assure que les anciennes images (non-Cloudinary) s'affichent toujours.
   let cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  // On force le préfixe uploads/ si absent
   if (!cleanPath.startsWith('uploads/')) {
     cleanPath = `uploads/${cleanPath}`;
   }
+
   const url = `${MEDIA_BASE.replace(/\/$/, '')}/${cleanPath}`;
   if (process.env.NODE_ENV === 'development') {
-    console.log('[getMediaUrl] URL finale:', url);
+    console.log(`[getMediaUrl] URL locale générée (fallback): ${url}`);
   }
   return url;
 };

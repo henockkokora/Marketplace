@@ -1,8 +1,22 @@
 const express = require('express')
 const router = express.Router({ mergeParams: true }) // Important pour récupérer :catId
 const Category = require('../models/Category')
-const multer = require('multer')
-const upload = multer({ dest: 'uploads/' })
+const multer = require('multer');
+const cloudinary = require('../utils/cloudinary');
+
+// Utiliser memoryStorage pour garder le fichier en buffer
+const storage = multer.memoryStorage();
+
+// Filtre pour les types de fichiers
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Seules les images sont autorisées!'), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // GET all subcategories across all categories
 router.get('/all', async (req, res) => {
@@ -39,10 +53,19 @@ router.post('/', upload.single('image'), async (req, res) => {
     const category = await Category.findById(req.params.categoryId)
     if (!category) return res.status(404).json({ error: 'Catégorie non trouvée' })
 
-    let imagePath = ''
-    if (req.file) imagePath = `/uploads/${req.file.filename}`
+    let imageUrl = '';
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        {
+          folder: 'subcategories',
+          public_id: `subcategory-${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
+        }
+      );
+      imageUrl = result.secure_url;
+    }
 
-    category.subcategories.push({ name, image: imagePath, subsubcategories: [] })
+    category.subcategories.push({ name, image: imageUrl, subsubcategories: [] });
     await category.save()
 
     res.status(201).json(category.subcategories.slice(-1)[0])
@@ -63,8 +86,32 @@ router.put('/:subId', upload.single('image'), async (req, res) => {
     const subcat = category.subcategories.id(req.params.subId)
     if (!subcat) return res.status(404).json({ error: 'Sous-catégorie non trouvée' })
 
-    subcat.name = name
-    if (req.file) subcat.image = `/uploads/${req.file.filename}`
+    subcat.name = name;
+    if (req.file) {
+      // Upload new image
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        {
+          folder: 'subcategories',
+          public_id: `subcategory-${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
+        }
+      );
+
+      // Delete old image from Cloudinary if it exists
+      if (subcat.image && subcat.image.includes('cloudinary')) {
+        const publicId = subcat.image.split('/').pop().split('.')[0];
+        const folder = subcat.image.split('/')[subcat.image.split('/').length - 2];
+        if (folder && publicId) {
+          try {
+            await cloudinary.uploader.destroy(`${folder}/${publicId}`);
+          } catch (e) {
+            console.error("Erreur lors de la suppression de l'ancienne image (sous-catégorie) sur Cloudinary:", e);
+          }
+        }
+      }
+      
+      subcat.image = result.secure_url;
+    }
 
     await category.save()
     res.json(subcat)
