@@ -55,7 +55,9 @@ exports.getAnalytics = async (req, res) => {
     });
 
     // --- Calculs pour la période courante ---
-    const revenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    // Ventes du mois : uniquement les commandes confirmées
+    const confirmedOrders = orders.filter(o => (o.status || '').toLowerCase() === 'confirmed');
+    const revenue = confirmedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const ordersCount = orders.length;
     const deliveredOrders = orders.filter(o => ['livré', 'delivered'].includes((o.status || '').toLowerCase()));
     const deliveredOrdersCount = deliveredOrders.length;
