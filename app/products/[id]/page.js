@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { getApiUrl, API_ENDPOINTS } from '@/app/lib/config'
 import Layout from '../../components/layout/Layout'
 import ImageCarousel from '../../components/products/ImageCarousel'
 import ProductInfo from '../../components/products/ProductInfo'
