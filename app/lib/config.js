@@ -32,6 +32,11 @@ export const getApiUrl = (endpoint = '') => {
     return endpoint;
   }
 
+  // Si endpoint est déjà une URL absolue (http ou https), retourne-le tel quel
+  if (/^https?:\/\//.test(endpoint)) {
+    return endpoint;
+  }
+
   // Supprime les slashes en double
   const cleanBaseUrl = API_BASE_URL.replace(/\/+$/, '');
   const cleanEndpoint = endpoint.replace(/^\/+/, '');
