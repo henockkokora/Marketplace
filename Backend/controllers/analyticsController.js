@@ -43,8 +43,9 @@ exports.getAnalytics = async (req, res) => {
 
     const orderFilter = {
       createdAt: { $gte: startDate },
-      status: { $in: ['confirmed', 'livré', 'delivered', 'completed', 'payé', 'paye'] }
+      status: { $in: ['pending', 'confirmed', 'livré', 'delivered', 'completed', 'payé', 'paye'] }
     };
+
 
     const orders = await Order.find(orderFilter);
     const { startPrev, endPrev } = getPreviousPeriod(range, now);

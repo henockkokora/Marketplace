@@ -45,35 +45,35 @@ export default function Dashboard() {
   const stats = analyticsData ? [
     {
       title: 'Ventes du mois',
-      value: analyticsData.revenue ? `${analyticsData.revenue.toLocaleString()} FCFA` : '-',
+      value: analyticsData.revenue !== undefined && analyticsData.revenue !== null ? `${analyticsData.revenue.toLocaleString()} FCFA` : 0,
       change: (analyticsData.revenueChange > 0 ? '+' : '') + analyticsData.revenueChange + '%',
       changeType: analyticsData.revenueChange > 0 ? 'positive' : analyticsData.revenueChange < 0 ? 'negative' : 'neutral',
       icon: DollarSign
     },
     {
       title: 'Commandes',
-      value: analyticsData.orders || '-',
+      value: analyticsData.orders !== undefined && analyticsData.orders !== null ? analyticsData.orders : 0,
       change: (analyticsData.ordersChange > 0 ? '+' : '') + analyticsData.ordersChange + '%',
       changeType: analyticsData.ordersChange > 0 ? 'positive' : analyticsData.ordersChange < 0 ? 'negative' : 'neutral',
       icon: ShoppingCart
     },
     {
       title: 'Livraisons effectuées',
-      value: analyticsData.deliveredOrders || '-',
+      value: analyticsData.deliveredOrders !== undefined && analyticsData.deliveredOrders !== null ? analyticsData.deliveredOrders : 0,
       change: (analyticsData.deliveredChange > 0 ? '+' : '') + analyticsData.deliveredChange + '%',
       changeType: analyticsData.deliveredChange > 0 ? 'positive' : analyticsData.deliveredChange < 0 ? 'negative' : 'neutral',
       icon: Package
     },
     {
       title: 'Produits',
-      value: analyticsData.products || '-',
+      value: analyticsData.products !== undefined && analyticsData.products !== null ? analyticsData.products : 0,
       change: (analyticsData.productsChange > 0 ? '+' : '') + analyticsData.productsChange + '%',
       changeType: analyticsData.productsChange > 0 ? 'positive' : analyticsData.productsChange < 0 ? 'negative' : 'neutral',
       icon: Package
     },
     {
       title: 'Clients livrés',
-      value: analyticsData.customers != null ? analyticsData.customers : '-',
+      value: analyticsData.customers !== undefined && analyticsData.customers !== null ? analyticsData.customers : 0,
       change: (analyticsData.customersChange > 0 ? '+' : '') + analyticsData.customersChange + '%',
       changeType: analyticsData.customersChange > 0 ? 'positive' : analyticsData.customersChange < 0 ? 'negative' : 'neutral',
       icon: Users
