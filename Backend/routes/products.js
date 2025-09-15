@@ -20,15 +20,16 @@ const cleanFileName = (fileName) => {
 // Config multer : stockage en mémoire (buffers) pour upload vers Cloudinary
 const storage = multer.memoryStorage();
 
-// Filtre pour les types de fichiers acceptés
+// Filtre pour les types de fichiers acceptés (images et vidéos)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/quicktime'];
   
-  if (allowedTypes.includes(file.mimetype)) {
+  if (allowedImageTypes.includes(file.mimetype) || allowedVideoTypes.includes(file.mimetype)) {
     console.log(`[Multer] Fichier accepté: ${file.originalname} (${file.mimetype})`);
     cb(null, true);
   } else {
-    const error = new Error(`Type de fichier non supporté: ${file.mimetype}. Formats acceptés: JPEG, PNG, WebP`);
+    const error = new Error(`Type de fichier non supporté: ${file.mimetype}. Formats acceptés: JPEG, PNG, WebP pour les images, MP4, WebM, OGG, AVI, MOV pour les vidéos`);
     console.error(`[Multer] ${error.message}`);
     cb(error, false);
   }
@@ -39,9 +40,9 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB max par fichier
-    files: 10, // Maximum 10 fichiers
-    fieldSize: 50 * 1024 * 1024 // 50MB max pour l'ensemble du formulaire
+    fileSize: 50 * 1024 * 1024, // 50MB max par fichier (pour supporter les vidéos)
+    files: 11, // Maximum 10 images + 1 vidéo
+    fieldSize: 100 * 1024 * 1024 // 100MB max pour l'ensemble du formulaire
   }
 });
 
@@ -50,10 +51,10 @@ const handleMulterErrors = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     // Une erreur de Multer s'est produite lors du téléchargement
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'La taille du fichier dépasse la limite autorisée (5MB)' });
+      return res.status(400).json({ error: 'La taille du fichier dépasse la limite autorisée (50MB)' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ error: 'Trop de fichiers téléchargés. Maximum 10 fichiers autorisés.' });
+      return res.status(400).json({ error: 'Trop de fichiers téléchargés. Maximum 11 fichiers (10 images + 1 vidéo) autorisés.' });
     }
     if (err.code === 'LIMIT_FIELD_KEY') {
       return res.status(400).json({ error: 'Trop de champs dans le formulaire' });
@@ -77,27 +78,69 @@ const handleMulterErrors = (err, req, res, next) => {
   next();
 };
 
-// Helpers Cloudinary
-const uploadBufferToCloudinary = (buffer, originalname) => {
+// Fonction pour uploader un buffer vers Cloudinary (images)
+async function uploadBufferToCloudinary(buffer, originalName) {
   return new Promise((resolve, reject) => {
-    const ext = path.extname(originalname).toLowerCase();
-    const cleanBaseName = cleanFileName(path.basename(originalname, ext));
-    const publicId = `${cleanBaseName}-${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const stream = cloudinary.uploader.upload_stream(
+    const cleanName = cleanFileName(originalName);
+    const publicId = `product-${Date.now()}-${cleanName.split('.')[0]}`;
+    
+    const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'products',
-        resource_type: 'image',
         public_id: publicId,
-        overwrite: false,
+        resource_type: 'image',
+        format: 'webp',
+        quality: 'auto:good',
+        fetch_format: 'auto'
       },
       (error, result) => {
-        if (error) return reject(error);
-        return resolve(result.secure_url);
+        if (error) {
+          console.error('[Cloudinary] Erreur upload image:', error);
+          reject(error);
+        } else {
+          console.log(`[Cloudinary] Image uploadée: ${result.secure_url}`);
+          resolve(result.secure_url);
+        }
       }
     );
-    stream.end(buffer);
+    
+    uploadStream.end(buffer);
   });
-};
+}
+
+// Fonction pour uploader une vidéo vers Cloudinary
+async function uploadVideoToCloudinary(buffer, originalName) {
+  return new Promise((resolve, reject) => {
+    const cleanName = cleanFileName(originalName);
+    const publicId = `video-${Date.now()}-${cleanName.split('.')[0]}`;
+    
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'products/videos',
+        public_id: publicId,
+        resource_type: 'video',
+        quality: 'auto:good',
+        format: 'mp4', // Convertir en MP4 pour la compatibilité
+        transformation: [
+          { width: 1280, height: 720, crop: 'limit' }, // Limiter la résolution
+          { quality: 'auto:good' },
+          { flags: 'streaming_attachment' } // Optimiser pour le streaming
+        ]
+      },
+      (error, result) => {
+        if (error) {
+          console.error('[Cloudinary] Erreur upload vidéo:', error);
+          reject(error);
+        } else {
+          console.log(`[Cloudinary] Vidéo uploadée: ${result.secure_url}`);
+          resolve(result.secure_url);
+        }
+      }
+    );
+    
+    uploadStream.end(buffer);
+  });
+}
 
 const extractPublicIdFromUrl = (url) => {
   try {
@@ -281,19 +324,35 @@ router.get('/admin/all', async (req, res) => {
   }
 })
 
-// POST create product avec upload images multiples (max 10)
-router.post('/', upload.array('images', 10), handleMulterErrors, async (req, res) => {
+// POST create product avec upload images multiples (max 10) et vidéo optionnelle
+router.post('/', upload.fields([
+  { name: 'images', maxCount: 10 },
+  { name: 'video', maxCount: 1 }
+]), handleMulterErrors, async (req, res) => {
   try {
-    if (!req.files || req.files.length === 0) {
+    if (!req.files || !req.files.images || req.files.images.length === 0) {
       return res.status(400).json({ error: 'Veuillez télécharger au moins une image' });
     }
 
-    // Upload vers Cloudinary et récupérer les URLs sécurisées
+    // Upload des images vers Cloudinary
     const imagesPaths = await Promise.all(
-      req.files.map((file) => uploadBufferToCloudinary(file.buffer, file.originalname))
+      req.files.images.map((file) => uploadBufferToCloudinary(file.buffer, file.originalname))
     );
 
     let productData = { ...req.body, images: imagesPaths };
+
+    // Upload de la vidéo vers Cloudinary si présente
+    if (req.files.video && req.files.video.length > 0) {
+      try {
+        const videoUrl = await uploadVideoToCloudinary(req.files.video[0].buffer, req.files.video[0].originalname);
+        productData.videoUrl = videoUrl;
+        console.log('[Product] Vidéo uploadée:', videoUrl);
+      } catch (videoError) {
+        console.error('[Product] Erreur upload vidéo:', videoError);
+        // On continue sans la vidéo si l'upload échoue
+        console.warn('[Product] Création du produit sans vidéo à cause de l\'erreur d\'upload');
+      }
+    }
 
     // Générer un slug unique à partir du nom du produit
     productData.slug = await generateUniqueSlug(productData.name);
@@ -399,8 +458,11 @@ router.patch('/:id/special-offer', async (req, res) => {
   }
 });
 
-// PUT update product avec upload (optionnel) images multiples
-router.put('/:id', upload.array('images', 10), handleMulterErrors, async (req, res) => {
+// PUT update product avec upload (optionnel) images multiples et vidéo
+router.put('/:id', upload.fields([
+  { name: 'images', maxCount: 10 },
+  { name: 'video', maxCount: 1 }
+]), handleMulterErrors, async (req, res) => {
   try {
     const productId = req.params.id;
     const updateData = { ...req.body };
@@ -412,10 +474,10 @@ router.put('/:id', upload.array('images', 10), handleMulterErrors, async (req, r
     }
 
     // Si de nouvelles images sont téléchargées
-    if (req.files && req.files.length > 0) {
+    if (req.files && req.files.images && req.files.images.length > 0) {
       // Upload vers Cloudinary
       const newImagesPaths = await Promise.all(
-        req.files.map((file) => uploadBufferToCloudinary(file.buffer, file.originalname))
+        req.files.images.map((file) => uploadBufferToCloudinary(file.buffer, file.originalname))
       );
 
       // Si on veut ajouter les nouvelles images aux existantes
@@ -435,6 +497,33 @@ router.put('/:id', upload.array('images', 10), handleMulterErrors, async (req, r
         }
         // Remplacer par les nouvelles images (URLs)
         updateData.images = newImagesPaths;
+      }
+    }
+
+    // Si une nouvelle vidéo est téléchargée
+    if (req.files && req.files.video && req.files.video.length > 0) {
+      try {
+        // Supprimer l'ancienne vidéo de Cloudinary si elle existe
+        if (existingProduct.videoUrl) {
+          const publicId = extractPublicIdFromUrl(existingProduct.videoUrl);
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+              console.log('[Product] Ancienne vidéo supprimée de Cloudinary:', publicId);
+            } catch (deleteError) {
+              console.error('[Product] Erreur suppression ancienne vidéo:', deleteError);
+            }
+          }
+        }
+
+        // Upload de la nouvelle vidéo
+        const videoUrl = await uploadVideoToCloudinary(req.files.video[0].buffer, req.files.video[0].originalname);
+        updateData.videoUrl = videoUrl;
+        console.log('[Product] Nouvelle vidéo uploadée:', videoUrl);
+      } catch (videoError) {
+        console.error('[Product] Erreur upload vidéo:', videoError);
+        // On continue la mise à jour sans changer la vidéo si l'upload échoue
+        console.warn('[Product] Mise à jour du produit sans changement de vidéo à cause de l\'erreur d\'upload');
       }
     }
 
@@ -464,7 +553,7 @@ router.put('/:id', upload.array('images', 10), handleMulterErrors, async (req, r
   }
 });
 
-// DELETE product avec suppression des images associées
+// DELETE product avec suppression des images et vidéos associées
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -478,12 +567,28 @@ router.delete('/:id', async (req, res) => {
         product.images.map(async (imgUrl) => {
           const publicId = extractPublicIdFromUrl(imgUrl);
           if (publicId) {
-            try { await cloudinary.uploader.destroy(publicId); } catch (e) {
-              console.error('Erreur suppression Cloudinary:', e?.message || e);
+            try { 
+              await cloudinary.uploader.destroy(publicId);
+              console.log('[Product] Image supprimée de Cloudinary:', publicId);
+            } catch (e) {
+              console.error('Erreur suppression image Cloudinary:', e?.message || e);
             }
           }
         })
       );
+    }
+
+    // Supprimer la vidéo de Cloudinary si elle existe
+    if (product.videoUrl) {
+      const publicId = extractPublicIdFromUrl(product.videoUrl);
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+          console.log('[Product] Vidéo supprimée de Cloudinary:', publicId);
+        } catch (e) {
+          console.error('Erreur suppression vidéo Cloudinary:', e?.message || e);
+        }
+      }
     }
 
     // Supprimer le produit de la base de données

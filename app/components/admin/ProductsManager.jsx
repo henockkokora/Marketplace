@@ -28,7 +28,7 @@ export default function ProductsManager() {
     stock: '',
     condition: 'new',
     status: 'active',
-    videoUrl: '',
+    video: null,
     images: null,
     isSpecialOffer: false,
     specialOfferPrice: ''
@@ -106,7 +106,7 @@ export default function ProductsManager() {
         stock: editingProduct.stock || '',
         condition: editingProduct.condition || 'new',
         status: editingProduct.status || 'active',
-        videoUrl: editingProduct.videoUrl || '',
+        video: null, // Toujours null pour l'édition, la vidéo actuelle sera affichée séparément
         images: null,
         isSpecialOffer: editingProduct.isSpecialOffer || false,
         specialOfferPrice: editingProduct.specialOfferPrice || ''
@@ -146,6 +146,27 @@ export default function ProductsManager() {
         
         setForm(f => ({ ...f, images: files }));
       }
+    } else if (name === 'video') {
+      if (files && files.length > 0) {
+        const file = files[0];
+        
+        // Vérifier le type de fichier vidéo
+        const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'];
+        if (!allowedVideoTypes.includes(file.type)) {
+          toast.error('Seuls les fichiers vidéo MP4, WebM, OGG, AVI et MOV sont acceptés');
+          e.target.value = null;
+          return;
+        }
+        
+        // Vérifier la taille du fichier vidéo (max 50MB)
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error('La taille maximale autorisée pour la vidéo est de 50MB');
+          e.target.value = null;
+          return;
+        }
+        
+        setForm(f => ({ ...f, video: file }));
+      }
     } else {
       // Gestion du toggle offre spéciale (checkbox)
       if (name === 'isSpecialOffer') {
@@ -170,6 +191,8 @@ export default function ProductsManager() {
       Object.entries(form).forEach(([key, val]) => {
         if (key === 'images' && val) {
           for (const file of val) fd.append('images', file)
+        } else if (key === 'video' && val) {
+          fd.append('video', val)
         } else if (val !== null && val !== undefined) {
           // Convertir les champs numériques
           if (['price', 'promoPrice', 'stock', 'specialOfferPrice'].includes(key)) {
@@ -670,13 +693,25 @@ const res = await fetch(getApiUrl(url), {
                 Vidéo de présentation (optionnel)
               </label>
               <input
-                type="url"
-                name="videoUrl"
-                value={form.videoUrl}
+                type="file"
+                name="video"
+                accept="video/*"
                 onChange={handleFormChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F2994A]"
-                placeholder="URL de la vidéo (YouTube, Vimeo...)"
               />
+              <p className="text-sm text-gray-500 mt-1">
+                Formats acceptés: MP4, WebM, OGG, AVI, MOV. Taille max: 50MB.
+              </p>
+              {editingProduct && editingProduct.videoUrl && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">Vidéo actuelle:</p>
+                  <video 
+                    src={editingProduct.videoUrl} 
+                    className="mt-1 w-32 h-20 object-cover rounded border"
+                    controls
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
