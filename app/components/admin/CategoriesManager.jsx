@@ -203,6 +203,16 @@ export default function CategoriesManager() {
       const toastId = toast.warning(
         <div className="flex flex-col gap-2 p-2">
           <div className="font-medium">Voulez-vous vraiment supprimer cet élément ?</div>
+          {type === 'category' && (
+            <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+              ⚠️ Attention : Tous les produits associés à cette catégorie seront également supprimés définitivement.
+            </div>
+          )}
+          {type === 'subcategory' && (
+            <div className="text-sm text-orange-600 bg-orange-50 p-2 rounded">
+              ⚠️ Attention : Tous les produits associés à cette sous-catégorie seront également supprimés définitivement.
+            </div>
+          )}
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={() => {
@@ -233,9 +243,14 @@ export default function CategoriesManager() {
                     throw new Error(errorRes.error || 'Erreur lors de la suppression');
                   }
                   
+                  const result = await res.json();
+                  
                   if (type === 'category') {
                     setCategories(prev => prev.filter(c => c._id !== catId));
-                    toast.success('Catégorie supprimée avec succès');
+                    const productsDeleted = result.productsDeleted || 0;
+                    toast.success(
+                      `Catégorie supprimée avec succès${productsDeleted > 0 ? ` (${productsDeleted} produit${productsDeleted > 1 ? 's' : ''} supprimé${productsDeleted > 1 ? 's' : ''})` : ''}`
+                    );
                   } else if (type === 'subcategory') {
                     setCategories(prev =>
                       prev.map(cat => {
@@ -248,7 +263,10 @@ export default function CategoriesManager() {
                         return cat;
                       })
                     );
-                    toast.success('Sous-catégorie supprimée avec succès');
+                    const productsDeleted = result.productsDeleted || 0;
+                    toast.success(
+                      `Sous-catégorie supprimée avec succès${productsDeleted > 0 ? ` (${productsDeleted} produit${productsDeleted > 1 ? 's' : ''} supprimé${productsDeleted > 1 ? 's' : ''})` : ''}`
+                    );
                   } else if (type === 'subsubcategory') {
                     setCategories(prev =>
                       prev.map(cat => {

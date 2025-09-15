@@ -3,6 +3,7 @@ const router = express.Router()
 const Category = require('../models/Category')
 const multer = require('multer');
 const cloudinary = require('../utils/cloudinary');
+const Product = require('../models/Product'); // Added missing import for Product
 
 const createSlug = (name) => name.toLowerCase().replace(/\s+/g, '-');
 
@@ -125,11 +126,66 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 // DELETE category
 router.delete('/:id', async (req, res) => {
   try {
-    await Category.findByIdAndDelete(req.params.id)
-    res.json({ message: 'Catégorie supprimée' })
+    const categoryId = req.params.id;
+    
+    // Vérifier si la catégorie existe
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ error: 'Catégorie non trouvée' });
+    }
+
+    // Supprimer tous les produits associés à cette catégorie
+    const productsToDelete = await Product.find({ category: categoryId });
+    
+    // Supprimer les images des produits sur Cloudinary
+    for (const product of productsToDelete) {
+      if (product.images && product.images.length > 0) {
+        for (const imageUrl of product.images) {
+          if (imageUrl && imageUrl.includes('cloudinary')) {
+            try {
+              const publicId = imageUrl.split('/').pop().split('.')[0];
+              const folder = imageUrl.split('/')[imageUrl.split('/').length - 2];
+              if (folder && publicId) {
+                await cloudinary.uploader.destroy(`${folder}/${publicId}`);
+                console.log(`Image de produit supprimée de Cloudinary: ${folder}/${publicId}`);
+              }
+            } catch (e) {
+              console.error("Erreur lors de la suppression d'une image de produit sur Cloudinary:", e);
+            }
+          }
+        }
+      }
+    }
+    
+    const deletedProducts = await Product.deleteMany({ category: categoryId });
+    console.log(`${deletedProducts.deletedCount} produits supprimés avec la catégorie ${category.name}`);
+
+    // Supprimer l'image de la catégorie sur Cloudinary si elle existe
+    if (category.image && category.image.includes('cloudinary')) {
+      try {
+        // Extrait le public_id de l'URL pour la suppression
+        const publicId = category.image.split('/').pop().split('.')[0];
+        const folder = category.image.split('/')[category.image.split('/').length - 2];
+        if (folder && publicId) {
+          await cloudinary.uploader.destroy(`${folder}/${publicId}`);
+          console.log(`Image de catégorie supprimée de Cloudinary: ${folder}/${publicId}`);
+        }
+      } catch (e) {
+        console.error("Erreur lors de la suppression de l'image sur Cloudinary:", e);
+      }
+    }
+
+    // Supprimer la catégorie
+    await Category.findByIdAndDelete(categoryId);
+    
+    res.json({ 
+      message: 'Catégorie supprimée avec succès',
+      productsDeleted: deletedProducts.deletedCount
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    console.error('Erreur lors de la suppression de la catégorie:', err);
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
 module.exports = router

@@ -50,22 +50,29 @@ router.put('/:subsubId', async (req, res) => {
 // DELETE subsubcategory
 router.delete('/:subsubId', async (req, res) => {
   try {
-    const category = await Category.findById(req.params.catId)
-    if (!category) return res.status(404).json({ error: 'Catégorie non trouvée' })
+    const category = await Category.findById(req.params.catId);
+    if (!category) return res.status(404).json({ error: 'Catégorie non trouvée' });
 
-    const subcat = category.subcategories.id(req.params.subId)
-    if (!subcat) return res.status(404).json({ error: 'Sous-catégorie non trouvée' })
+    const subcat = category.subcategories.id(req.params.subId);
+    if (!subcat) return res.status(404).json({ error: 'Sous-catégorie non trouvée' });
 
-    const subsub = subcat.subsubcategories.id(req.params.subsubId)
-    if (!subsub) return res.status(404).json({ error: 'Sous-sous-catégorie non trouvée' })
+    const subsub = subcat.subsubcategories.id(req.params.subsubId);
+    if (!subsub) return res.status(404).json({ error: 'Sous-sous-catégorie non trouvée' });
 
-    subsub.remove()
-    await category.save()
+    const subsubcategoryName = subsub.name;
+    console.log(`Suppression de la sous-sous-catégorie: ${subsubcategoryName}`);
 
-    res.json({ message: 'Sous-sous-catégorie supprimée' })
+    subsub.remove();
+    await category.save();
+
+    res.json({ 
+      message: 'Sous-sous-catégorie supprimée avec succès',
+      name: subsubcategoryName
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    console.error('Erreur lors de la suppression de la sous-sous-catégorie:', err);
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
 module.exports = router
