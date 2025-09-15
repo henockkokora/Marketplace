@@ -52,8 +52,16 @@ router.get('/', async (req, res) => {
 router.get('/slug/:slug', async (req, res) => {
   try {
     const { populate } = req.query;
+    let requestedSlug = req.params.slug;
     
-    let category = await Category.findOne({ slug: req.params.slug });
+    // Normaliser le slug reçu (remplacer les espaces par des tirets, etc.)
+    const normalizedSlug = requestedSlug.toLowerCase().replace(/\s+/g, '-');
+    
+    // Essayer d'abord avec le slug tel qu'il est reçu, puis avec le slug normalisé
+    let category = await Category.findOne({ slug: requestedSlug });
+    if (!category && requestedSlug !== normalizedSlug) {
+      category = await Category.findOne({ slug: normalizedSlug });
+    }
     
     if (!category) {
       // Log pour debug : lister toutes les catégories et leurs slugs
@@ -62,11 +70,13 @@ router.get('/slug/:slug', async (req, res) => {
       allCategories.forEach(cat => {
         console.log(`- "${cat.name}" -> slug: "${cat.slug || 'AUCUN'}"`);
       });
-      console.log(`Slug recherché: "${req.params.slug}"`);
+      console.log(`Slug recherché: "${requestedSlug}"`);
+      console.log(`Slug normalisé: "${normalizedSlug}"`);
       
       return res.status(404).json({ 
         error: 'Catégorie non trouvée',
-        requestedSlug: req.params.slug,
+        requestedSlug: requestedSlug,
+        normalizedSlug: normalizedSlug,
         availableCategories: allCategories.map(cat => ({
           name: cat.name,
           slug: cat.slug || null

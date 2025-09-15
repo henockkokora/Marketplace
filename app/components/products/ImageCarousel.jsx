@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight, Play } from 'lucide-react'
 
 export default function ImageCarousel({ images, video }) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showVideo, setShowVideo] = useState(false)
   
   // S'assurer que les images sont un tableau et filtrer les valeurs nulles ou vides
   const allMedia = Array.isArray(images) 
@@ -33,26 +32,14 @@ export default function ImageCarousel({ images, video }) {
       {/* Main display */}
       <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
         {isVideo ? (
-          <div className="w-full h-full">
-            {showVideo ? (
-              <video
-                src={currentMedia.url}
-                className="w-full h-full object-cover"
-                controls
-                autoPlay
-              />
-            ) : (
-              <div
-                className="w-full h-full bg-gray-800 flex items-center justify-center cursor-pointer"
-                onClick={() => setShowVideo(true)}
-              >
-                <div className="text-center text-white">
-                  <Play size={64} className="mx-auto mb-4" />
-                  <p className="text-lg">Cliquez pour lire la vidéo</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <video
+            src={currentMedia.url}
+            className="w-full h-full object-cover"
+            controls
+            autoPlay
+            muted
+            loop
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             {currentMedia ? (
@@ -97,10 +84,7 @@ export default function ImageCarousel({ images, video }) {
           {allMedia.map((media, index) => (
             <button
               key={index}
-              onClick={() => {
-                setCurrentIndex(index)
-                setShowVideo(false)
-              }}
+              onClick={() => setCurrentIndex(index)}
               className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                 index === currentIndex ? 'border-[#404E7C]' : 'border-[#404E7C]'
               }`}

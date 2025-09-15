@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getMediaUrl, getFallbackImage } from '@/app/lib/media';
+import { createSlug } from '@/app/lib/utils';
 
 export default function Categories({ categories }) {
   return (
@@ -10,7 +11,7 @@ export default function Categories({ categories }) {
           {categories.map((category) => (
             <Link
               key={category._id || category.id || category.name}
-              href={`/categories/${category.name.toLowerCase()}`}
+              href={`/categories/${category.slug || createSlug(category.name)}`}
               className="group"
             >
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg hover:bg-[#F2994A]1A transition-all transform hover:scale-105 hover:-translate-y-1 overflow-hidden">

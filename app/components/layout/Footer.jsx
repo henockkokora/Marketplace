@@ -40,10 +40,10 @@ export default function Footer() {
             <h3 className="font-bold text-lg mb-4">Catégories</h3>
             <ul className="space-y-2">
               <li><Link href="/categories/electronique" className="text-black hover:text-gray-600">Électronique</Link></li>
-              <li><Link href="/categories/mode" className="text-black hover:text-gray-600">Mode</Link></li>
-              <li><Link href="/categories/maison" className="text-black hover:text-gray-600">Maison</Link></li>
-              <li><Link href="/categories/sports" className="text-black hover:text-gray-600">Sports</Link></li>
-              <li><Link href="/categories/beaute" className="text-black hover:text-gray-600">Beauté</Link></li>
+              <li><Link href="/categories/mode-et-vetements" className="text-black hover:text-gray-600">Mode</Link></li>
+              <li><Link href="/categories/maison-et-cuisine" className="text-black hover:text-gray-600">Maison</Link></li>
+              <li><Link href="/categories/sports-et-loisirs" className="text-black hover:text-gray-600">Sports</Link></li>
+              <li><Link href="/categories/beaute-et-soins" className="text-black hover:text-gray-600">Beauté</Link></li>
             </ul>
           </div>
 
