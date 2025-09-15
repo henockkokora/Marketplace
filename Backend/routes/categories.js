@@ -24,25 +24,64 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024
 // GET all categories
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find()
-    res.json(categories)
+    const categories = await Category.find();
+    
+    // Vérifier et corriger les slugs manquants
+    let updated = false;
+    for (const category of categories) {
+      if (!category.slug) {
+        category.slug = createSlug(category.name);
+        await category.save();
+        updated = true;
+        console.log(`Slug ajouté pour la catégorie: ${category.name} -> ${category.slug}`);
+      }
+    }
+    
+    if (updated) {
+      console.log('Slugs mis à jour pour les catégories');
+    }
+    
+    res.json(categories);
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    console.error('Erreur lors de la récupération des catégories:', err);
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
 // GET category by slug
 router.get('/slug/:slug', async (req, res) => {
   try {
-    const category = await Category.findOne({ slug: req.params.slug })
+    const { populate } = req.query;
+    
+    let category = await Category.findOne({ slug: req.params.slug });
+    
     if (!category) {
-      return res.status(404).json({ error: 'Catégorie non trouvée' })
+      // Log pour debug : lister toutes les catégories et leurs slugs
+      const allCategories = await Category.find({}, 'name slug');
+      console.log('Catégories disponibles:');
+      allCategories.forEach(cat => {
+        console.log(`- "${cat.name}" -> slug: "${cat.slug || 'AUCUN'}"`);
+      });
+      console.log(`Slug recherché: "${req.params.slug}"`);
+      
+      return res.status(404).json({ 
+        error: 'Catégorie non trouvée',
+        requestedSlug: req.params.slug,
+        availableCategories: allCategories.map(cat => ({
+          name: cat.name,
+          slug: cat.slug || null
+        }))
+      });
     }
-    res.json(category)
+
+    // Si populate=subcategories est demandé, on retourne la catégorie avec ses sous-catégories
+    // (les sous-catégories sont déjà incluses dans le modèle Category)
+    res.json(category);
   } catch (err) {
-    res.status(500).json({ error: 'Erreur serveur lors de la récupération de la catégorie' })
+    console.error('Erreur lors de la récupération de la catégorie par slug:', err);
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération de la catégorie' });
   }
-})
+});
 
 // POST create category with image upload
 router.post('/', upload.single('image'), async (req, res) => {

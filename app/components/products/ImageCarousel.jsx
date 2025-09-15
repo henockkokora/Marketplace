@@ -35,11 +35,11 @@ export default function ImageCarousel({ images, video }) {
         {isVideo ? (
           <div className="w-full h-full">
             {showVideo ? (
-              <iframe
+              <video
                 src={currentMedia.url}
-                className="w-full h-full"
-                frameBorder="0"
-                allowFullScreen
+                className="w-full h-full object-cover"
+                controls
+                autoPlay
               />
             ) : (
               <div
@@ -48,7 +48,7 @@ export default function ImageCarousel({ images, video }) {
               >
                 <div className="text-center text-white">
                   <Play size={64} className="mx-auto mb-4" />
-                  <p className="text-lg">Cliquez pour voir la vidéo</p>
+                  <p className="text-lg">Cliquez pour lire la vidéo</p>
                 </div>
               </div>
             )}

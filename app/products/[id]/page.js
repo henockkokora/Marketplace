@@ -101,7 +101,7 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* ImageCarousel avec taille réduite */}
           <div className="max-w-3xl mx-auto w-full">
-            <ImageCarousel images={product.images} video={product.video} />
+            <ImageCarousel images={product.images} video={product.videoUrl} />
           </div>
           <ProductInfo product={product} />
         </div>

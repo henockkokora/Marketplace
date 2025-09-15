@@ -31,39 +31,65 @@ export default function CategoryPage() {
       setError(null);
       
       try {
+        console.log(`[CategoryPage] Chargement de la catégorie avec slug: "${slug}"`);
+        
         // Récupérer la catégorie par son slug avec ses sous-catégories
-        const categoryResponse = await fetch(getApiUrl(`${API_ENDPOINTS.CATEGORIES}/slug/${slug}?populate=subcategories`));
+        const categoryUrl = getApiUrl(`${API_ENDPOINTS.CATEGORIES}/slug/${slug}?populate=subcategories`);
+        console.log(`[CategoryPage] URL de la catégorie: ${categoryUrl}`);
+        
+        const categoryResponse = await fetch(categoryUrl);
+        console.log(`[CategoryPage] Réponse catégorie: ${categoryResponse.status} ${categoryResponse.statusText}`);
+        
         if (!categoryResponse.ok) {
-          throw new Error('Catégorie non trouvée');
+          const errorText = await categoryResponse.text();
+          console.error(`[CategoryPage] Erreur réponse catégorie: ${errorText}`);
+          throw new Error(`Catégorie non trouvée (${categoryResponse.status}): ${errorText}`);
         }
+        
         const categoryData = await categoryResponse.json();
+        console.log(`[CategoryPage] Données catégorie reçues:`, categoryData);
         setCategory(categoryData);
 
         // Récupérer les produits de la catégorie et de ses sous-catégories
         let productsResponse;
+        let productsUrl;
         
         // Si la catégorie a des sous-catégories, on filtre par ces sous-catégories
         if (categoryData.subcategories && categoryData.subcategories.length > 0) {
           const subcategoryIds = categoryData.subcategories.map(sub => sub._id);
-          productsResponse = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}?subcategory=${subcategoryIds.join(',')}`));
+          productsUrl = getApiUrl(`${API_ENDPOINTS.PRODUCTS}?subcategory=${subcategoryIds.join(',')}`);
+          console.log(`[CategoryPage] URL produits par sous-catégories: ${productsUrl}`);
+          productsResponse = await fetch(productsUrl);
         } else {
           // Si pas de sous-catégories, on filtre par la catégorie principale
-          productsResponse = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}?category=${categoryData._id}`));
+          productsUrl = getApiUrl(`${API_ENDPOINTS.PRODUCTS}?category=${categoryData._id}`);
+          console.log(`[CategoryPage] URL produits par catégorie: ${productsUrl}`);
+          productsResponse = await fetch(productsUrl);
         }
         
+        console.log(`[CategoryPage] Réponse produits: ${productsResponse.status} ${productsResponse.statusText}`);
+        
         if (!productsResponse.ok) {
-          throw new Error('Erreur lors du chargement des produits');
+          const errorText = await productsResponse.text();
+          console.error(`[CategoryPage] Erreur réponse produits: ${errorText}`);
+          throw new Error(`Erreur lors du chargement des produits (${productsResponse.status})`);
         }
+        
         const productsData = await productsResponse.json();
+        console.log(`[CategoryPage] Produits reçus:`, productsData);
+        
         // Vérification que productsData est bien un tableau
         if (!Array.isArray(productsData)) {
+          console.error(`[CategoryPage] Format invalide pour les produits:`, typeof productsData, productsData);
           throw new Error('Format de données invalide pour les produits');
         }
         
         setProducts(productsData);
         setFilteredProducts(productsData);
+        
+        console.log(`[CategoryPage] Chargement terminé avec succès - ${productsData.length} produits`);
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
+        console.error('[CategoryPage] Erreur lors du chargement des données:', error);
         setError(error.message || 'Une erreur est survenue lors du chargement des données');
       } finally {
         setIsLoading(false);
