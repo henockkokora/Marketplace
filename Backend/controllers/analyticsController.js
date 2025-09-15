@@ -43,33 +43,34 @@ exports.getAnalytics = async (req, res) => {
 
     const orderFilter = {
       createdAt: { $gte: startDate },
-      status: { $in: ['pending', 'confirmed', 'livré', 'delivered', 'completed', 'payé', 'paye'] }
+      status: { $in: ['pending', 'paid', 'shipped', 'delivered'] }
     };
 
 
-    const orders = await Order.find(orderFilter);
+    const orders = await Order.find(orderFilter).populate('user', 'name email');
     const { startPrev, endPrev } = getPreviousPeriod(range, now);
     const prevOrders = await Order.find({
       createdAt: { $gte: startPrev, $lt: endPrev },
       status: orderFilter.status
-    });
+    }).populate('user', 'name email');
 
     // --- Calculs pour la période courante ---
-    // Ventes du mois : uniquement les commandes confirmées
-    const confirmedOrders = orders.filter(o => (o.status || '').toLowerCase() === 'confirmed');
-    const revenue = confirmedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    // Ventes du mois : uniquement les commandes payées et livrées
+    const paidOrders = orders.filter(o => ['paid', 'shipped', 'delivered'].includes((o.status || '').toLowerCase()));
+    const revenue = paidOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const ordersCount = orders.length;
-    const deliveredOrders = orders.filter(o => ['livré', 'delivered'].includes((o.status || '').toLowerCase()));
+    const deliveredOrders = orders.filter(o => (o.status || '').toLowerCase() === 'delivered');
     const deliveredOrdersCount = deliveredOrders.length;
-    const customersCount = new Set(deliveredOrders.map(o => o.user?.email || o.user?.name)).size;
+    const customersCount = new Set(deliveredOrders.map(o => o.user?.email || o.user?.name || o.user?._id)).size;
     const productsCreated = await Product.countDocuments({ createdAt: { $gte: startDate } });
 
     // --- Calculs pour la période précédente ---
-    const prevRevenue = prevOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    const prevPaidOrders = prevOrders.filter(o => ['paid', 'shipped', 'delivered'].includes((o.status || '').toLowerCase()));
+    const prevRevenue = prevPaidOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const prevOrdersCount = prevOrders.length;
-    const prevDeliveredOrders = prevOrders.filter(o => ['livré', 'delivered'].includes((o.status || '').toLowerCase()));
+    const prevDeliveredOrders = prevOrders.filter(o => (o.status || '').toLowerCase() === 'delivered');
     const prevDeliveredOrdersCount = prevDeliveredOrders.length;
-    const prevCustomersCount = new Set(prevDeliveredOrders.map(o => o.user?.email || o.user?.name)).size;
+    const prevCustomersCount = new Set(prevDeliveredOrders.map(o => o.user?.email || o.user?.name || o.user?._id)).size;
     const prevProductsCreated = await Product.countDocuments({ createdAt: { $gte: startPrev, $lt: endPrev } });
 
     // --- Calcul des pourcentages d'évolution ---
@@ -151,11 +152,38 @@ exports.getAnalytics = async (req, res) => {
         name: p.name,
         category: p.category?.name || 'Non catégorisé',
         clicks: p.clicks || 0
+      })),
+      recentOrders: orders.slice(0, 5).map(o => ({
+        id: o._id,
+        orderNumber: o.orderNumber || `CMD-${o._id.toString().slice(-6).toUpperCase()}`,
+        customer: o.user ? (o.user.name || o.user.email) : 'Client anonyme',
+        total: o.totalPrice || 0,
+        status: o.status || 'pending',
+        date: o.createdAt,
+        productsCount: o.products ? o.products.length : 0
       }))
     });
 
   } catch (err) {
     console.error('Analytics Error:', err);
-    res.status(500).json({ error: 'Erreur lors du calcul des statistiques', details: err.message });
+    res.status(500).json({ 
+      error: 'Erreur lors du calcul des statistiques', 
+      details: err.message,
+      // Retourner des valeurs par défaut en cas d'erreur
+      revenue: 0,
+      orders: 0,
+      deliveredOrders: 0,
+      products: 0,
+      customers: 0,
+      revenueChange: 0,
+      ordersChange: 0,
+      deliveredChange: 0,
+      customersChange: 0,
+      productsChange: 0,
+      topProductsByCategory: {},
+      monthlyStats: [],
+      mostClickedProducts: [],
+      recentOrders: []
+    });
   }
 };
