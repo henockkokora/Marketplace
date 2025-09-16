@@ -17,6 +17,7 @@ export default function ProductsManager() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [submitting, setSubmitting] = useState(false) // Nouvel état pour le loading du formulaire
 
   // --- FORM STATE ---
   const initialForm = {
@@ -179,6 +180,7 @@ export default function ProductsManager() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitting(true) // Activer le loading
     try {
       // Vérifier les champs requis
       if (!form.name || !form.price || !form.subcategory) {
@@ -222,7 +224,7 @@ export default function ProductsManager() {
         body: Object.fromEntries(fd.entries())
       })
 
-const res = await fetch(getApiUrl(url), { 
+      const res = await fetch(getApiUrl(url), { 
         method, 
         body: fd,
         // Ne pas définir le Content-Type, il sera défini automatiquement avec la boundary
@@ -247,6 +249,8 @@ const res = await fetch(getApiUrl(url), {
     } catch (err) {
       console.error('Erreur lors de la soumission du formulaire:', err)
       toast.error(err.message || 'Une erreur est survenue lors de la sauvegarde')
+    } finally {
+      setSubmitting(false) // Désactiver le loading
     }
   }
 
@@ -832,14 +836,32 @@ const res = await fetch(getApiUrl(url), {
             <div className="flex space-x-4 pt-6">
               <button
                 type="submit"
-                className="bg-[#F2994A] text-white px-6 py-2 rounded-lg hover:bg-[#F2994A]1A transition-colors"
+                disabled={submitting}
+                className={`${
+                  submitting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-[#F2994A] hover:bg-[#e68a3e]'
+                } text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2`}
               >
-                {editingProduct ? 'Modifier' : 'Créer'}
+                {submitting && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
+                <span>
+                  {submitting 
+                    ? (editingProduct ? 'Modification...' : 'Création...') 
+                    : (editingProduct ? 'Modifier' : 'Créer')
+                  }
+                </span>
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => { setShowForm(false); setEditingProduct(null); setForm(initialForm) }}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                className={`${
+                  submitting 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                } px-6 py-2 rounded-lg transition-colors`}
               >
                 Annuler
               </button>
